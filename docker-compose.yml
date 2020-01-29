@@ -1,0 +1,26 @@
+---
+
+version: "3.2"
+
+services:
+
+  awsh:
+    image: "hestio/blox:latest"
+    hostname: awsh
+    network_mode: "host"
+    volumes:
+      - ${HOME}/.awsh:/home/awsh/.awsh
+      - /etc/krb5.conf:/etc/krb5.conf
+      - /etc/krb5.conf.d/:/etc/krb5.conf.d/
+      - ${HOME}:/workspace
+      - /tmp:/tmp
+    environment:
+      # Tip: Activate only the entries you use; http_proxy and https_proxy at a minimum
+      HTTP_PROXY: "${http_proxy}"
+      http_proxy: "${http_proxy}"
+      HTTPS_PROXY: "${https_proxy}"
+      https_proxy: "${https_proxy}"
+      no_proxy: "${no_proxy}"
+      NO_PROXY: "${no_proxy}"
+      # Tip: Are you already authenticated with AD/Kerberos
+      KRB5CCNAME: "${KRB5CCNAME}"
