@@ -1,0 +1,240 @@
+#!/usr/bin/env python
+
+'''
+Simple script that attempts to parse the contents of terraform.tfstate into
+markdown based documentation for each of the resources found
+
+Usage:
+    terraform-state-doc [options]
+    terraform-state-doc ( -h | --help )
+
+Options:
+    -t <tfstate-file>, --tfstate=<tfstate-file>
+                          The path to the Terraform state file, usually
+                          terraform.tfstate [default: terraform.tfstate]
+    -i, --indent          Toggle to enable indentation of resource tables
+    -h, --help            Show this help message and exit
+    --debug               More verbose (usually debug) logging and output
+
+'''
+
+from future.utils import iteritems
+import docopt
+import json as json
+from tabulate import tabulate
+import logging as _log
+from string import Template
+import os.path
+import datetime
+
+###############################################################################
+# CONFIG - Begin
+###############################################################################
+
+_TEMPLATE_DOC_HEADER_MARKDOWN = """
+# AS BUILT DOCS
+
+This document represents the current state of resources provisioned from Terraform IaaC (Infrastructure as Code).
+
+> Last updated $doc_gen_datetime
+
+## Table of Contents
+
+[TOC]
+
+## Stack Resources
+
+"""
+
+
+_TEMPLATE_GROUP_HEADER_MARKDOWN = """
+
+### $resource_type
+"""
+
+
+_TEMPLATE_INSTANCE_MARKDOWN = """
+#### $resource_path / $resource_name
+
+**Resource Attributes**
+
+$resource_doc"""
+
+
+_TEMPLATE_DOC_FOOTER_MARKDOWN = """
+"""
+
+
+_TEMPLATE_RESOURCE_VALUE_JSON_MARKDOWN = """
+
+**JSON Document: $name**
+```json
+$resource_doc
+```
+"""
+
+
+_TEMPLATE_DOC_FOOTER_MARKDOWN = """
+"""
+
+_JSON_FIELD_NAMES = [
+    'policy',
+    'assume_role_policy'
+]
+
+
+
+###############################################################################
+# CONFIG - End (Do Not Edit Below)
+###############################################################################
+
+
+###############################################################################
+# Functions
+###############################################################################
+
+def _is_json(s):
+    try:
+        json.loads(s)
+    except ValueError as e:
+        return False
+    return True
+
+
+def _doc_json_content(j, indent=2, content_indent=''):
+    if _is_json(j):
+        json_doc = json.dumps(json.loads(j), indent=indent)
+        json_doc = '\n'.join([ '{}{}'.format(content_indent, x) for x in json_doc.splitlines() ])
+        return(json_doc)
+    return(j)
+
+
+def _doc_instance(i):
+
+    without_json_entries = [ x for x in i if len(set(x).intersection(set(_JSON_FIELD_NAMES))) <= 0 ]
+    json_entries = [ x for x in i if len(set(x).intersection(set(_JSON_FIELD_NAMES))) > 0 ]
+
+    content = tabulate(
+        sorted(without_json_entries),
+        headers=['Attribute', 'Value'],
+        tablefmt='pipe'
+    )
+
+    tmpl_json_resource = Template(_TEMPLATE_RESOURCE_VALUE_JSON_MARKDOWN)
+    for j in json_entries:
+        policy_doc = tmpl_json_resource.substitute(
+            name=j[0],
+            resource_doc=_doc_json_content(j[1])
+        )
+        content = '\n'.join([ content, policy_doc])
+
+    return(content)
+
+
+def _doc_resources(grouped_resources, enable_indent=False):
+
+    indent = '    '
+    tmpl_doc_header = Template(_TEMPLATE_DOC_HEADER_MARKDOWN)
+    tmpl_group_header = Template(_TEMPLATE_GROUP_HEADER_MARKDOWN)
+    tmpl_resource = Template(_TEMPLATE_INSTANCE_MARKDOWN)
+
+    now = datetime.datetime.now().isoformat()
+
+    print(tmpl_doc_header.substitute(
+        doc_gen_datetime=str(now)
+    ))
+
+    for rtype, items in sorted(grouped_resources.iteritems()):
+        print(tmpl_group_header.substitute(
+            resource_type=rtype
+        ))
+
+        for i in items:
+            if enable_indent:
+                resource_doc = '\n'.join([ '{}{}'.format(indent, x) for x in i['doc'].splitlines() ])
+            else:
+                resource_doc = i['doc']
+
+            # if the resource has a JSON policy value process it with different template
+
+            print(tmpl_resource.substitute(
+                resource_path=i['path'].replace('root', 'ALL'),
+                resource_name=i['name'].replace('.', ' / '),
+                resource_doc=resource_doc
+            ))
+
+    print(_TEMPLATE_DOC_FOOTER_MARKDOWN)
+
+
+def _parse_terraform_state(filename=None, enable_indent=False):
+
+    if os.path.isfile(filename):
+
+        file_content = open(filename).read()
+        _log.debug('Read {} bytes from state file'.format(len(file_content)))
+        tf = json.loads(file_content)
+
+        grouped_resources = {}
+
+        for module in tf['modules']:
+            _log.debug('Processing for module: {}'.format(module['path']))
+            rnames = [ rname for rname in module['resources'] if rname.startswith('aws_') ]
+
+            normalized_resources = [{
+                'name': r.replace('{}.'.format(module['resources'][r]['type']), ''),
+                'path': ' / '.join(module['path']),
+                'type': module['resources'][r]['type'],
+                'doc': _doc_instance([ [k, ' '.join(v.splitlines() if v is not None else []) ] for k, v in module['resources'][r]['primary']['attributes'].iteritems() ])
+            } for r in rnames ]
+
+            rtypes = set([ r['type'] for r in normalized_resources ])
+
+            # Iterate over unique types
+            for t in sorted(rtypes):
+                # Initialize the placeholder if needed
+                if t not in grouped_resources.keys():
+                    _log.debug('Adding type container for: {}'.format(t))
+                    grouped_resources[t] = []
+
+                matching_resources = [ r for r in normalized_resources if r['type'] == t ]
+                grouped_resources[t].extend(matching_resources)
+
+        # Now that resources are normalized and grouped they can be dumped into
+        # the desired output
+        _doc_resources(grouped_resources, enable_indent=enable_indent)
+
+    else:
+        _log.error('File {} was not found'.format(filename))
+
+
+def main(options):
+    """
+    The main program function
+    """
+    if options['--debug'] is True:
+        import logging
+        _log.getLogger().setLevel(logging.DEBUG)
+
+    for key, value in iteritems(options):
+        _log.debug('command-line options: {}: {}'.format(key, value))
+
+    try:
+
+        _parse_terraform_state(filename=options['--tfstate'], enable_indent=options['--indent'])
+
+    except KeyboardInterrupt:
+        _log.info('Interrupted.. (try with -v for verbose mode if you need more info)')
+
+    except AssertionError, e:
+        _log.warn(e)
+
+
+if __name__ == "__main__":
+
+    try:
+        options = docopt.docopt(__doc__)
+        main(options)
+
+    # Handle invalid options
+    except docopt.DocoptExit as e:
+        print(e.message)

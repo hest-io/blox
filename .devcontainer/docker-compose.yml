@@ -5,9 +5,8 @@ version: "3.2"
 services:
 
   blox-workspace:
-    image: "hestio/awsh"
+    image: "hestio/blox:develop"
     hostname: blox-workspace
-    container_name: blox-workspace
     network_mode: "host"
     entrypoint: tail -f /dev/null
     volumes:
@@ -23,12 +22,14 @@ services:
       # Map temporary cache, used by Kerberos and for sharing credentials between host and workspace
       - /tmp:/tmp
     environment:
-      # Activate only the entries you use; http_proxy and https_proxy at a minimum
+      # Tip: Activate only the entries you use; http_proxy and https_proxy at a minimum
       HTTP_PROXY: "${http_proxy}"
       http_proxy: "${http_proxy}"
       HTTPS_PROXY: "${https_proxy}"
       https_proxy: "${https_proxy}"
       no_proxy: "${no_proxy}"
       NO_PROXY: "${no_proxy}"
-      # Do you have a fancy Font with glyphs?
-      # PATCHED_FONT_IN_USE: 'yes'
+      # Tip: Do you have a fancy Font with glyphs?
+      #   PATCHED_FONT_IN_USE: 'yes'
+      # Tip: Are you already authenticated with AD/Kerberos
+      KRB5CCNAME: "${KRB5CCNAME}"

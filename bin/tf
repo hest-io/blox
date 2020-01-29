@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+##############################################################################
+# Shell Behaviour
+##############################################################################
+
+# Check for unbound variables being used
+# set -o nounset
+
+# Exit is a bad command is attempted. If you're going to handle errors then
+# leave this disabled
+# set -o errexit
+
+# Exit if any of the commands in a pipeline exit with a non-zero exit code
+# set -o pipefail
+
+##############################################################################
+# Variables
+##############################################################################
+
+CONST_COMMAND_LINE="$@"
+CONST_OS_VERSION=$(uname -r)
+CONST_SYSTEM_TYPE=$(uname -m)
+CONST_SCRIPT_NAME=${0##*/}
+
+_LOGFILE="$(mktemp)/${CONST_SCRIPT_NAME}.log"
+_LOGFILE_RETAIN_NUM_LINES=0
+_COLOR_RESET="$(echo -e '\e[0m')"
+_COLOR_RED="$(echo -e '\e[31m')"
+
+# Defaults
+: ${TIMESTAMP_FORMAT:="%Y-%m-%dT%H:%M:%S%z"}    # override via environment
+: ${TF_VAR_FILE:="00-environment.tfvars"}       # override via environment
+
+TF_VAR_FILE_ARGS=
+
+##############################################################################
+# Functions
+##############################################################################
+
+# set _LOGFILE to the full path of your desired logfile; make sure
+# you have write permissions there. set _LOGFILE_RETAIN_NUM_LINES to the
+# maximum number of lines that should be retained at the beginning
+# of your program execution.
+# execute 'logsetup' once at the beginning of your script, then  use 'log' as
+# many times you like.
+_logsetup() {
+    TMP=$(tail -n ${_LOGFILE_RETAIN_NUM_LINES} "${_LOGFILE}" 2>/dev/null) && echo "${TMP}" > "${_LOGFILE}"
+    exec > >(tee -a "${_LOGFILE}")
+    exec 2>&1
+}
+
+
+_log() {
+    echo "[$(date --rfc-3339=seconds)]: $*${_COLOR_RESET}"
+}
+
+
+_log_error() {
+    echo "[$(date --rfc-3339=seconds)]: ${_COLOR_RED}$*${_COLOR_RESET}"
+}
+
+
+_exit_with_error() {
+    echo "${_COLOR_RED}$*${_COLOR_RESET}"
+    exit 1
+}
+
+
+# A helper function that can be used to pipe multiple items to the logging
+# helper
+_log_pipe() {
+    while IFS= read -r line; do _log "${line}"; done
+}
+
+
+# Specialized init to tidy existing repos
+_tf_init() {
+    # Create th TF cache if needed
+    if [[ ! -d "${HOME}/.awsh/.terraform/plugins" ]]; then
+        echo "Adding TF Plugins cache folder to AWSH"
+        mkdir -p "${HOME}/.awsh/.terraform/plugins"
+    fi
+    # Trash and rebuild the .terraform folder
+    echo "Relinking TF Plugins cache folder from AWSH"
+    rm -rf "$(pwd)/.terraform" 2>/dev/null
+    mkdir -p "$(pwd)/.terraform" 2>/dev/null
+    ln -s "${HOME}/.awsh/.terraform/plugins" "$(pwd)/.terraform/plugins"
+    # Rename common var files to aupport auto-loading
+    if [[ -f "$(pwd)/00-environment.tfvars" ]]; then
+        echo "Moving 00-environment.tfvars to support auto-loading"
+        mv "$(pwd)/00-environment.tfvars" "$(pwd)/00-environment.auto.tfvars"
+    fi
+}
+
+_tf_doc() {
+    local _DOC_NAME="AS-BUILT-DOC.md"
+    {
+        echo ""
+        "${HOME}/bin/terraform-state-doc"
+        echo ""
+        echo "## Stack Changelog"
+        echo ""
+        echo "| Commit | Changed By | Date Modified | Description of Change|"
+        echo "|:--- |:--- | ---:|:--- |"
+        git mdlog 
+    } > "${_DOC_NAME}"
+    echo "Updated ${_DOC_NAME} from terraform.tfstate"
+}
+
+
+_tf_detect_local_vars() {
+    local var_file_name="00-environment.tfvars"
+    echo -n "Check for local vars..."
+    if [[ -f "$(pwd)/${var_file_name}" ]]; then
+        echo "Found (${var_file_name}). Setting CONF"
+        CONF="${var_file_name}"
+        TF_VAR_FILE_ARGS="-var-file=${CONF}"
+        export CONF TF_VAR_FILE_ARGS
+    fi
+}
+
+
+_tf_export() {
+    local _TF_EXPORT_OUTPUT="$(basename "$(pwd)").json"
+    [ -f terraform.tfstate ] || _exit_with_error "No Terraform state file found to export"
+    echo "Exporting managed resources to ${_TF_EXPORT_OUTPUT}"
+    terraform output managed_resources_json | jq '.' > "${_TF_EXPORT_OUTPUT}"
+}
+
+
+# Check our code for syntax/lint issues
+_tf_check_syntax() {
+    echo "Checking syntax"
+    tflint --config "${HOME}/etc/tflint.hcl"
+    [ $? -eq 0 ] || _exit_with_error "Resolve syntax errors first"
+}
+
+
+
+##############################################################################
+# Main Script
+##############################################################################
+
+# Check for AWS variables. There's no Terraform without AWS credentials!
+if [ -z "${AWS_DEFAULT_REGION}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ] || [ -z "${AWS_ACCESS_KEY_ID}" ]; then
+    echo "AWS credentials not found in environment. Load some before using Terraform"
+    exit 1
+fi
+
+
+# Redirect all output through the time-stamper
+# exec &> >(_log_pipe)
+
+tf_command="${1}"
+# _tf_detect_local_vars
+
+case ${tf_command} in
+
+    doc)
+        _tf_doc
+    ;;
+
+    init)
+        _tf_init
+        terraform "${@}" ${TF_VAR_FILE_ARGS}
+    ;;
+
+    plan)
+        terraform "${@}" ${TF_VAR_FILE_ARGS}
+    ;;
+
+    plandiff|diffplan)
+        terraform "${@}" ${TF_VAR_FILE_ARGS} | landscape
+    ;;
+
+    destroy)
+        terraform "${@}" ${TF_VAR_FILE_ARGS}
+    ;;
+
+    export)
+        _tf_export
+    ;;
+
+    lint)
+        _tf_check_syntax
+        echo "Syntax check passed, Starting run.."
+    ;;
+
+    validate)
+        _tf_check_syntax
+        echo "Syntax check passed, Starting run.."
+        terraform "${@}" ${TF_VAR_FILE_ARGS}
+    ;;
+
+    *)
+        terraform "${@}"
+    ;;
+
+esac
