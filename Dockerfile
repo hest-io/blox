@@ -1,24 +1,26 @@
 ###############################################################################
 # AWSH Workspace - AWSH Toolset with IAC tools
 ###############################################################################
-FROM "awsh:local"
+FROM "hestio/awsh"
+
+
+###############################################################################
+# UUID ARGS to prevent Docker's inheritance from ruining our day
+###############################################################################
+ARG BLOX_BUILD_HTTP_PROXY
+ARG BLOX_BUILD_HTTPS_PROXY
+ARG BLOX_BUILD_NO_PROXY
 
 ###############################################################################
 # ARGs
 ###############################################################################
-ARG HTTP_PROXY="${http_proxy}"
-ARG http_proxy="${http_proxy}"
-ARG HTTPS_PROXY="${https_proxy}"
-ARG https_proxy="${https_proxy}"
-ARG no_proxy="${no_proxy}"
-ARG NO_PROXY="${NO_PROXY}"
+
 ARG DML_BASE_URL_TF="https://releases.hashicorp.com/terraform"
 ARG DML_BASE_URL_TFLINT="https://github.com/terraform-linters/tflint/releases/download"
 ARG AWSH_PYTHON_DEPS="/tmp/requirements.python2"
-
+ARG RUNTIME_PACKAGES="wget"
 ARG DEFAULT_TERRAFORM_VERSION="0.11.3"
 ARG DEFAULT_TFLINT_VERSION="0.9.3"
-
 ARG SW_VER_LANDSCAPE="0.3.2"
 
 ###############################################################################
@@ -32,12 +34,8 @@ ENV PUID 1000
 ENV PGID 1000
 ENV PYTHONPATH /opt/awsh/lib/python
 ENV PATH "/opt/awsh/bin:/opt/awsh/bin/tools:${PATH}:${AWSH_USER_HOME}/bin"
-ENV HTTP_PROXY "${http_proxy}"
-ENV http_proxy "${http_proxy}"
-ENV HTTPS_PROXY "${https_proxy}"
-ENV https_proxy "${https_proxy}"
-ENV no_proxy "${no_proxy}"
-ENV NO_PROXY "${NO_PROXY}"
+
+ENV DEFAULT_TERRAFORM_VERSION ${DEFAULT_TERRAFORM_VERSION}
 
 ###############################################################################
 # LABELs
@@ -45,48 +43,42 @@ ENV NO_PROXY "${NO_PROXY}"
 
 USER root
 
-# Install TF 0.12.x
-ARG TERRAFORM_VERSION=0.12.7
+# Add new entrypoint
+COPY lib/docker/entrypoint.sh /opt/awsh/lib/docker/entrypoint.sh
 
+# Add Terraform
 RUN \
     cd /usr/local/bin && \
-    curl "${DML_BASE_URL_TF}/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" && \
-    unzip "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" && \
-    mv terraform "terraform-${TERRAFORM_VERSION}" && \
-    rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.12.7_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.12.7/terraform_0.12.7_linux_amd64.zip"  && \
+    unzip "terraform_0.12.7_linux_amd64.zip" && \
+    mv terraform "terraform-0.12.7" && \
+    rm "terraform_0.12.7_linux_amd64.zip"
 
 # Install TF 0.11.x (11.x release with reasonable backwards compatibility)
-ARG TERRAFORM_VERSION=0.11.3
-
 RUN \
     cd /usr/local/bin && \
-    curl "${DML_BASE_URL_TF}/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" && \
-    unzip "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" && \
-    mv terraform "terraform-${TERRAFORM_VERSION}" && \
-    rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.11.3_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.11.3/terraform_0.11.3_linux_amd64.zip"  && \
+    unzip "terraform_0.11.3_linux_amd64.zip" && \
+    mv terraform "terraform-0.11.3" && \
+    rm "terraform_0.11.3_linux_amd64.zip"
 
 # Install TF 0.11.7 (first 11.x release with provider breaking changes)
-ARG TERRAFORM_VERSION=0.11.7
-
 RUN \
     cd /usr/local/bin && \
-    curl "${DML_BASE_URL_TF}/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" && \
-    unzip "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" && \
-    mv terraform "terraform-${TERRAFORM_VERSION}" && \
-    rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
-
-# Link the default TF version
-RUN ln -s "/usr/local/bin/terraform-${DEFAULT_TERRAFORM_VERSION}" "/usr/local/bin/terraform" 
+    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.11.7_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip"  && \
+    unzip "terraform_0.11.7_linux_amd64.zip" && \
+    mv terraform "terraform-0.11.7" && \
+    rm "terraform_0.11.7_linux_amd64.zip"
 
 # Add TF-Lint
 RUN \
     cd /usr/local/bin && \
-    curl -L "${DML_BASE_URL_TFLINT}/v${DEFAULT_TFLINT_VERSION}/tflint_linux_amd64.zip" -o "terraform_${DEFAULT_TFLINT_VERSION}_linux_amd64.zip" && \
-    unzip "terraform_${DEFAULT_TFLINT_VERSION}_linux_amd64.zip" && \
-    rm "terraform_${DEFAULT_TFLINT_VERSION}_linux_amd64.zip"
+    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "tflint_linux_amd64.zip" "${DML_BASE_URL_TFLINT}/v${DEFAULT_TFLINT_VERSION}/tflint_linux_amd64.zip"  && \
+    unzip "tflint_linux_amd64.zip" && \
+    rm "tflint_linux_amd64.zip"
 
 # Add landscape
-RUN gem install terraform_landscape --version ${SW_VER_LANDSCAPE} --no-ri --no-rdoc
+RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${SW_VER_LANDSCAPE} --no-ri --no-rdoc
 
 COPY bin/ "${AWSH_USER_HOME}/bin/"
 COPY etc/ "${AWSH_USER_HOME}/etc/"
@@ -96,11 +88,11 @@ RUN \
     chown -c -R ${AWSH_USER}:${AWSH_GROUP} ${AWSH_ROOT} && \
     chown -c -R ${AWSH_USER}:${AWSH_GROUP} ${AWSH_USER_HOME}
 
-
 WORKDIR ${AWSH_USER_HOME}
 
-ENTRYPOINT ["fixuid"]
+ENTRYPOINT ["/opt/awsh/lib/docker/entrypoint.sh"]
 
-CMD ["-q", "/bin/bash"]
+CMD ["/bin/bash", "-i"]
 
-USER ${AWSH_USER}:${AWSH_GROUP}
+USER awsh
+# USER ${AWSH_USER}:${AWSH_GROUP}

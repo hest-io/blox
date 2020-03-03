@@ -1,12 +1,11 @@
 ---
 
-version: "3.2"
+version: "3"
 
 services:
 
-  awsh:
+  blox:
     image: "hestio/blox:latest"
-    hostname: awsh
     network_mode: "host"
     volumes:
       - ${HOME}/.awsh:/home/awsh/.awsh
@@ -22,5 +21,7 @@ services:
       https_proxy: "${https_proxy}"
       no_proxy: "${no_proxy}"
       NO_PROXY: "${no_proxy}"
-      # Tip: Are you already authenticated with AD/Kerberos
+      # Tip: Are you already authenticated with AD/Kerberos?
       KRB5CCNAME: "${KRB5CCNAME}"
+      # Tip: Do you want to set the default version of Terraform?
+      DEFAULT_TERRAFORM_VERSION: "0.11.3"

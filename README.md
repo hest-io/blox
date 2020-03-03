@@ -1,16 +1,16 @@
-# AWSH: Cloud Shell - VS Code Remote Workspace
+# BLOX: Cloud Shell Builders Workspace
 
 AWS Shell: Load and use your AWS identities with all your favorite AWS tools inside VS Code using Remote 
 
-## What is AWSH and how can it help me?
+## What is BLOX and how can it help me?
 
-The AWSH tools are a collection of Python and BASH helper scripts that are intended to augment your existing interaction with AWS by;
+The BLOX container is a collection tools, scripts and utilities that are intended to augment your existing interaction with AWS, specifically for provisioning and managing resources. Contains;
 
-- Helping with the loading of AWS credentials into the environment that can be re-used by all of your existing AWS toolset; Terraform, AWS CLI, Terraforming, Ansible, etc
-- Helping to generate useful information about existing resources you already have on AWS in a format that can be used as part of a pipeline for other tools/apps
+- AWSH (AWS Shell)
+- Terraform (multiple versions)
 
 
-## Using AWSH with VS Code Remote
+## Using BLOX with VS Code Remote
 
 - Clone the repo and open it in VS Code. VS Code will detect the Container configuration and offer to re-open your workspace in a Container
 
@@ -18,7 +18,7 @@ The AWSH tools are a collection of Python and BASH helper scripts that are inten
 
 - Add your own source code/tools as normal
 
-- You also have AWSH embedded into your default Terminal
+- You also have BLOX embedded into your default Terminal
 
     ![Source](.devcontainer/docs/images/Selection_615.png)
 

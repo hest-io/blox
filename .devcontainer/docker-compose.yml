@@ -1,14 +1,14 @@
 ---
 
-version: "3.2"
+version: "3"
 
 services:
 
   blox-workspace:
-    image: "hestio/blox:develop"
+    image: "hestio/blox"
     hostname: blox-workspace
     network_mode: "host"
-    entrypoint: tail -f /dev/null
+    entrypoint: /opt/awsh/lib/docker/entrypoint.sh tail -f /dev/null
     volumes:
       # Pass in your AWSH identities and filters
       - ${HOME}/.awsh:/home/awsh/.awsh
@@ -33,3 +33,7 @@ services:
       #   PATCHED_FONT_IN_USE: 'yes'
       # Tip: Are you already authenticated with AD/Kerberos
       KRB5CCNAME: "${KRB5CCNAME}"
+      # Tip: Do you want to set the default version of Terraform?
+      DEFAULT_TERRAFORM_VERSION: "0.11.3"
+
+

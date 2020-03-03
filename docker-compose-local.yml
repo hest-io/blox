@@ -1,19 +1,19 @@
 ---
 
-version: "3.2"
+version: "3"
 
 services:
 
-  awsh:
+  blox:
     build:
       context: ./
-      dockerfile: ./Dockerfile
+      dockerfile: Dockerfile
       args:
-        http_proxy: "${http_proxy}"
-        https_proxy: "${https_proxy}"
-    hostname: awsh
-    image: "awsh:workspace"
-    network_mode: "host"
+        BLOX_BUILD_HTTP_PROXY: "${http_proxy}"
+        BLOX_BUILD_HTTPS_PROXY: "${https_proxy}"
+        BLOX_BUILD_NO_PROXY: "${no_proxy}"
+    network_mode: host
+    image: "blox:local"
     volumes:
       - ${HOME}/.awsh:/home/awsh/.awsh
       - /etc/krb5.conf:/etc/krb5.conf
@@ -28,3 +28,4 @@ services:
       no_proxy: "${no_proxy}"
       NO_PROXY: "${no_proxy}"
       KRB5CCNAME: "${KRB5CCNAME}"
+      # DEFAULT_TERRAFORM_VERSION: "0.12.7"
