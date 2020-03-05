@@ -1,6 +1,6 @@
 # BLOX: Cloud Shell Builders Workspace
 
-AWS Shell: Load and use your AWS identities with all your favorite AWS tools inside VS Code using Remote 
+Containerized tools for building on AWS
 
 ## What is BLOX and how can it help me?
 
