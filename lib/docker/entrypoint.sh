@@ -11,4 +11,4 @@ eval $( fixuid -q )
 ln -s "/usr/local/bin/terraform-${DEFAULT_TERRAFORM_VERSION}" "${HOME}/bin/terraform"
 
 # On with the show
-$@
+exec "$@"
