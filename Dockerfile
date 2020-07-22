@@ -21,6 +21,8 @@ ARG AWSH_PYTHON_DEPS="/tmp/requirements.python2"
 ARG RUNTIME_PACKAGES="wget"
 ARG DEFAULT_TERRAFORM_VERSION="0.11.3"
 ARG DEFAULT_TFLINT_VERSION="0.9.3"
+ARG DEFAULT_PACKER_VERSION="1.6.0"
+ARG DEFAULT_ANSIBLE_VERSION="2.7.8"
 ARG SW_VER_LANDSCAPE="0.3.2"
 
 ###############################################################################
@@ -45,6 +47,16 @@ USER root
 
 # Add new entrypoint
 COPY lib/docker/entrypoint.sh /opt/awsh/lib/docker/entrypoint.sh
+
+# Add Ansible
+RUN python -m pip install --disable-pip-version-check "ansible==${DEFAULT_ANSIBLE_VERSION}"
+
+# Add Packer
+RUN \
+    cd /usr/local/bin && \
+    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "packer_1.6.0_linux_amd64.zip" "https://releases.hashicorp.com/packer/1.6.0/packer_1.6.0_linux_amd64.zip"  && \
+    unzip "packer_1.6.0_linux_amd64.zip" && \
+    rm "packer_1.6.0_linux_amd64.zip"
 
 # Add Terraform
 RUN \
