@@ -17,7 +17,7 @@ ARG BLOX_BUILD_NO_PROXY
 
 ARG DML_BASE_URL_TF="https://releases.hashicorp.com/terraform"
 ARG DML_BASE_URL_TFLINT="https://github.com/terraform-linters/tflint/releases/download"
-ARG AWSH_PYTHON_DEPS="/tmp/requirements.python2"
+ARG BLOX_PYTHON_DEPS="requirements.blox"
 ARG RUNTIME_PACKAGES="wget"
 ARG DEFAULT_TERRAFORM_VERSION="0.11.3"
 ARG DEFAULT_TFLINT_VERSION="0.9.3"
@@ -48,8 +48,9 @@ USER root
 # Add new entrypoint
 COPY lib/docker/entrypoint.sh /opt/awsh/lib/docker/entrypoint.sh
 
-# Add Ansible
-RUN python -m pip install --disable-pip-version-check "ansible==${DEFAULT_ANSIBLE_VERSION}"
+# Add Python packages
+COPY requirements/ /tmp
+RUN python -m pip install -r "/tmp/${BLOX_PYTHON_DEPS}" --disable-pip-version-check
 
 # Add Packer
 RUN \

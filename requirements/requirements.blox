@@ -1,0 +1,4 @@
+# VM configuration managament
+ansible==2.7.8
+# AMI Cleanup
+aws-amicleaner==0.2.2
