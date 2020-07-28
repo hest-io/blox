@@ -19,7 +19,7 @@ ARG DML_BASE_URL_TF="https://releases.hashicorp.com/terraform"
 ARG DML_BASE_URL_TFLINT="https://github.com/terraform-linters/tflint/releases/download"
 ARG BLOX_PYTHON_DEPS="requirements.blox"
 ARG RUNTIME_PACKAGES="wget"
-ARG DEFAULT_TERRAFORM_VERSION="0.11.3"
+ARG DEFAULT_TERRAFORM_VERSION="0.12.20"
 ARG DEFAULT_TFLINT_VERSION="0.9.3"
 ARG DEFAULT_PACKER_VERSION="1.6.0"
 ARG DEFAULT_ANSIBLE_VERSION="2.7.8"
@@ -62,10 +62,10 @@ RUN \
 # Add Terraform
 RUN \
     cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.12.7_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.12.7/terraform_0.12.7_linux_amd64.zip"  && \
-    unzip "terraform_0.12.7_linux_amd64.zip" && \
-    mv terraform "terraform-0.12.7" && \
-    rm "terraform_0.12.7_linux_amd64.zip"
+    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.12.20_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip"  && \
+    unzip "terraform_0.12.20_linux_amd64.zip" && \
+    mv terraform "terraform-0.12.20" && \
+    rm "terraform_0.12.20_linux_amd64.zip"
 
 # Install TF 0.11.x (11.x release with reasonable backwards compatibility)
 RUN \
