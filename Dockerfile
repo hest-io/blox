@@ -93,6 +93,9 @@ RUN \
 # Add landscape
 RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${SW_VER_LANDSCAPE} --no-ri --no-rdoc
 
+# Add AMI Cleaner
+RUN easy_install-2.7 https://github.com/Gousto/aws-amicleaner/archive/master.zip
+
 COPY bin/ "${AWSH_USER_HOME}/bin/"
 COPY etc/ "${AWSH_USER_HOME}/etc/"
 

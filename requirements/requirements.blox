@@ -1,6 +1,4 @@
 # VM configuration managament
 ansible==2.8.15
-# AMI Cleanup
-aws-amicleaner==0.2.2
 # WinRM access for Ansible
 pywinrm>=0.2.2
