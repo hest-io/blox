@@ -19,6 +19,7 @@ ARG DML_BASE_URL_TF="https://releases.hashicorp.com/terraform"
 ARG DML_BASE_URL_TFLINT="https://github.com/terraform-linters/tflint/releases/download"
 ARG BLOX_PYTHON_DEPS="requirements.blox"
 ARG RUNTIME_PACKAGES="wget"
+ARG TERRAFORM_VERSIONS="0.12.29 0.12.20 0.11.7 0.11.3"
 ARG DEFAULT_TERRAFORM_VERSION="0.12.20"
 ARG DEFAULT_TFLINT_VERSION="0.9.3"
 ARG DEFAULT_PACKER_VERSION="1.6.0"
@@ -48,6 +49,10 @@ USER root
 # Add new entrypoint
 COPY lib/docker/entrypoint.sh /opt/awsh/lib/docker/entrypoint.sh
 
+# Add the Terraform CLI config and ensure the cache dir exists
+COPY lib/docker/terraformrc "${AWSH_USER_HOME}/.terraformrc"
+RUN mkdir -p "${AWSH_USER_HOME}/.terraform.d/plugin-cache"
+
 # Add Python packages
 COPY requirements/ /tmp
 RUN python -m pip install -r "/tmp/${BLOX_PYTHON_DEPS}" --disable-pip-version-check
@@ -59,29 +64,15 @@ RUN \
     unzip "packer_1.6.0_linux_amd64.zip" && \
     rm "packer_1.6.0_linux_amd64.zip"
 
-# Add Terraform
+# Add Terraform versions
 RUN \
     cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.12.20_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.12.20/terraform_0.12.20_linux_amd64.zip"  && \
-    unzip "terraform_0.12.20_linux_amd64.zip" && \
-    mv terraform "terraform-0.12.20" && \
-    rm "terraform_0.12.20_linux_amd64.zip"
-
-# Install TF 0.11.x (11.x release with reasonable backwards compatibility)
-RUN \
-    cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.11.3_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.11.3/terraform_0.11.3_linux_amd64.zip"  && \
-    unzip "terraform_0.11.3_linux_amd64.zip" && \
-    mv terraform "terraform-0.11.3" && \
-    rm "terraform_0.11.3_linux_amd64.zip"
-
-# Install TF 0.11.7 (first 11.x release with provider breaking changes)
-RUN \
-    cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_0.11.7_linux_amd64.zip" "https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip"  && \
-    unzip "terraform_0.11.7_linux_amd64.zip" && \
-    mv terraform "terraform-0.11.7" && \
-    rm "terraform_0.11.7_linux_amd64.zip"
+    for tfver in ${TERRAFORM_VERSIONS}; do \
+        curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_${tfver}_linux_amd64.zip" "https://releases.hashicorp.com/terraform/${tfver}/terraform_${tfver}_linux_amd64.zip"; \
+        unzip "terraform_${tfver}_linux_amd64.zip"; \
+        mv terraform "terraform-${tfver}"; \
+        rm "terraform_${tfver}_linux_amd64.zip"; \
+    done
 
 # Add TF-Lint
 RUN \

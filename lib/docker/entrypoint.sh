@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Defaults
-: ${DEFAULT_TERRAFORM_VERSION:="0.11.3"}
+: ${DEFAULT_TERRAFORM_VERSION:="0.12.20"}
 
 # UID/GID (may) map to unknown user/group, $HOME=/ (the default when no home directory is defined)
 eval $( fixuid -q )
