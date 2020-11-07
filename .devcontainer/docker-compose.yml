@@ -5,7 +5,16 @@ version: "3"
 services:
 
   blox-workspace:
-    image: "hestio/blox"
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      args:
+        http_proxy: "${http_proxy}"
+        https_proxy: "${https_proxy}"
+        HTTP_PROXY: "${http_proxy}"
+        HTTPS_PROXY: "${https_proxy}"
+        no_proxy: "${no_proxy}"
+        NO_PROXY: "${no_proxy}"
     hostname: blox-workspace
     network_mode: "host"
     entrypoint: /opt/awsh/lib/docker/entrypoint.sh tail -f /dev/null
@@ -34,6 +43,6 @@ services:
       # Tip: Are you already authenticated with AD/Kerberos
       KRB5CCNAME: "${KRB5CCNAME}"
       # Tip: Do you want to set the default version of Terraform?
-      DEFAULT_TERRAFORM_VERSION: "0.11.3"
+      DEFAULT_TERRAFORM_VERSION: "0.12.29"
 
 
