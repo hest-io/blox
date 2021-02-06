@@ -95,11 +95,13 @@ RUN \
     chown -c -R ${AWSH_USER}:${AWSH_GROUP} ${AWSH_ROOT} && \
     chown -c -R ${AWSH_USER}:${AWSH_GROUP} ${AWSH_USER_HOME}
 
+# Add hook for AWSH that activates during CICD usage
+RUN echo '. /opt/awsh/etc/awshrc' >> /etc/profile.d/entrypoint.sh
+RUN echo '[ -f ${HOME}/.bashrc_local ] && . ${HOME}/.bashrc_local' >> /etc/profile.d/entrypoint.sh
+
 WORKDIR ${AWSH_USER_HOME}
+USER awsh
 
 ENTRYPOINT ["/opt/awsh/lib/docker/entrypoint.sh"]
-
 CMD ["/bin/bash", "-i"]
 
-USER awsh
-# USER ${AWSH_USER}:${AWSH_GROUP}
