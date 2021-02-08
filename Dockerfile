@@ -1,7 +1,7 @@
 ###############################################################################
 # AWSH Workspace - AWSH Toolset with IAC tools
 ###############################################################################
-FROM "hestio/awsh"
+FROM "hestio/awsh:develop"
 
 
 ###############################################################################
@@ -28,6 +28,11 @@ ARG DEFAULT_ANSIBLE_VERSION="2.7.8"
 ARG DEFAULT_TERRAGRUNT_VERSIOn="v0.28.2"
 ARG SW_VER_LANDSCAPE="0.3.2"
 
+ARG CMD_PIP="python3 -m pip"
+
+ARG AWSH_PIP_INSTALL_ARGS="--no-cache-dir --disable-pip-version-check"
+ARG AWSH_GEM_INSTALL_ARGS="--no-document"
+
 ###############################################################################
 # ENVs
 ###############################################################################
@@ -37,7 +42,7 @@ ENV AWSH_USER awsh
 ENV AWSH_GROUP awsh
 ENV PUID 1000
 ENV PGID 1000
-ENV PYTHONPATH /opt/awsh/lib/python
+ENV PYTHONPATH /opt/awsh/lib/python3
 ENV PATH "/opt/awsh/bin:/opt/awsh/bin/tools:${PATH}:${AWSH_USER_HOME}/bin"
 
 ENV DEFAULT_TERRAFORM_VERSION ${DEFAULT_TERRAFORM_VERSION}
@@ -57,7 +62,7 @@ RUN mkdir -p "${AWSH_USER_HOME}/.terraform.d/plugin-cache"
 
 # Add Python packages
 COPY requirements/ /tmp
-RUN python -m pip install -r "/tmp/${BLOX_PYTHON_DEPS}" --disable-pip-version-check
+RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} -r "/tmp/${BLOX_PYTHON_DEPS}"
 
 # Add Packer
 RUN \
@@ -91,10 +96,10 @@ RUN \
     chmod 755 terragrunt
 
 # Add landscape
-RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${SW_VER_LANDSCAPE} --no-ri --no-rdoc
+RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${SW_VER_LANDSCAPE} ${AWSH_GEM_INSTALL_ARGS}
 
 # Add AMI Cleaner
-RUN python -m pip install git+https://github.com/kirklatslalom/aws-amicleaner.git
+RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} git+https://github.com/kirklatslalom/aws-amicleaner.git
 
 COPY bin/ "${AWSH_USER_HOME}/bin/"
 COPY etc/ "${AWSH_USER_HOME}/etc/"
