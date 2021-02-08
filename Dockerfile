@@ -17,6 +17,7 @@ ARG BLOX_BUILD_NO_PROXY
 
 ARG DML_BASE_URL_TF="https://releases.hashicorp.com/terraform"
 ARG DML_BASE_URL_TFLINT="https://github.com/terraform-linters/tflint/releases/download"
+ARG DML_BASE_URL_TERRAGRUNT="https://github.com/gruntwork-io/terragrunt/releases/download"
 ARG BLOX_PYTHON_DEPS="requirements.blox"
 ARG RUNTIME_PACKAGES="wget"
 ARG TERRAFORM_VERSIONS="0.12.29 0.12.20 0.11.7 0.11.3"
@@ -24,6 +25,7 @@ ARG DEFAULT_TERRAFORM_VERSION="0.12.20"
 ARG DEFAULT_TFLINT_VERSION="0.9.3"
 ARG DEFAULT_PACKER_VERSION="1.6.0"
 ARG DEFAULT_ANSIBLE_VERSION="2.7.8"
+ARG DEFAULT_TERRAGRUNT_VERSIOn="v0.28.2"
 ARG SW_VER_LANDSCAPE="0.3.2"
 
 ###############################################################################
@@ -80,6 +82,13 @@ RUN \
     curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "tflint_linux_amd64.zip" "${DML_BASE_URL_TFLINT}/v${DEFAULT_TFLINT_VERSION}/tflint_linux_amd64.zip"  && \
     unzip "tflint_linux_amd64.zip" && \
     rm "tflint_linux_amd64.zip"
+
+# Add Terragrunt CLI
+RUN \
+    cd /usr/local/bin && \
+    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terragrunt_linux_amd64" "${DML_BASE_URL_TERRAGRUNT}/v${DEFAULT_TFLINT_VERSION}/terragrunt_linux_amd64"  && \
+    mv "terragrunt_linux_amd64" "terragrunt" && \
+    chmod 755 terragrunt
 
 # Add landscape
 RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${SW_VER_LANDSCAPE} --no-ri --no-rdoc
