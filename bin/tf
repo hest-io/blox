@@ -106,7 +106,7 @@ function _tf_doc {
         echo ""
         echo "| Commit | Changed By | Date Modified | Description of Change|"
         echo "|:--- |:--- | ---:|:--- |"
-        git mdlog 
+        git mdlog
     } > "${_DOC_NAME}"
     echo "Updated ${_DOC_NAME} from terraform.tfstate"
 }
@@ -200,7 +200,7 @@ case ${tf_command} in
         _screen_info "Syntax check passed, Starting run.."
     ;;
 
-    default)
+    default|switch)
         shift
         _tf_change_default_version "${@}"
     ;;
