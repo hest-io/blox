@@ -10,7 +10,7 @@ stages:
 
 variables:
   DOCKERHUB_REGISTRY: "docker.io"
-  DOCKERHUB_IMAGE: "hestio/worxspace"
+  DOCKERHUB_IMAGE: "hestio/blox"
 
 services:
   - docker:dind
