@@ -134,7 +134,7 @@ function _tf_export {
 
 # Check our code for syntax/lint issues
 function _tf_check_syntax {
-    _screen_info "Checking syntax"
+    _screen_info "Checking syntax with tflint"
     tflint --config "${HOME}/etc/tflint.hcl"
     [ $? -eq 0 ] || _exit_with_error "Resolve syntax errors first"
 }
@@ -207,7 +207,7 @@ case ${tf_command} in
 
     validate|check)
         _tf_check_syntax
-        _screen_info "Syntax check passed, Starting run.."
+        _screen_info "Lint check passed, Starting validation.."
         terraform "${@}" ${TF_VAR_FILE_ARGS}
     ;;
 
