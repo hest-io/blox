@@ -8,10 +8,6 @@ config {
   #   region     = "us-east-1"
   # }
 
-  ignore_rule = {
-    terraform_module_pinned_source  = true
-  }
-
   # varfile = [ "terraform.tfvars", "00-environment.tfvars" ]
   
 }
