@@ -103,7 +103,7 @@ RUN \
 RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${SW_VER_LANDSCAPE} ${AWSH_GEM_INSTALL_ARGS}
 
 # Add AMI Cleaner: https://pypi.org/project/aws-amicleaner/
-RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} git+https://github.com/kirklatslalom/aws-amicleaner.git
+RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} git+https://github.com/DimaGolomozy/aws-amicleaner.git
 
 # Add infracost: https://github.com/infracost/infracost
 RUN \
