@@ -195,6 +195,10 @@ case ${tf_command} in
         _tf_export
     ;;
 
+    fmt|format)
+        terraform fmt -recursive"${@}"
+    ;;
+
     lint)
         _tf_check_syntax
         _screen_info "Syntax check passed, Starting run.."
