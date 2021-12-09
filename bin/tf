@@ -196,7 +196,7 @@ case ${tf_command} in
     ;;
 
     fmt|format)
-        terraform fmt -recursive"${@}"
+        terraform fmt -recursive
     ;;
 
     lint)
