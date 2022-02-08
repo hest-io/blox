@@ -1,4 +1,4 @@
-ARG AWSH_VERSION=develop
+ARG AWSH_VERSION=master
 
 ###############################################################################
 # AWSH Workspace - AWSH Toolset with IAC tools
