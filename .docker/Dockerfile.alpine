@@ -1,4 +1,4 @@
-ARG AWSH_VERSION=master
+ARG AWSH_VERSION=latest
 
 ###############################################################################
 # AWSH Workspace - AWSH Toolset with IAC tools
