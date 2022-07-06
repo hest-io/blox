@@ -1,7 +1,7 @@
 # BLOX: Containerized Tools for developing and building on AWS
 
 [![GitHub license](https://img.shields.io/github/license/hest-io/blox.svg?style=flat-square)](https://github.com/hest-io/blox/blob/master/LICENSE)
-[![GitHub changelog](https://img.shields.io/badge/documentation-ONLINE-651fff.svg?style=flat-square)](http://worx.docs.hest.io/blox/)
+[![GitHub changelog](https://img.shields.io/badge/documentation-ONLINE-651fff.svg?style=flat-square)](https://worx.hest.io/blox/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hestio/blox.svg)](https://hub.docker.com/r/hestio/blox)
 
 ## What is BLOX?
@@ -9,7 +9,7 @@
 ![showcase](docs/media/images/showcase-blox.png)
 
 - Containerized Shell with AWS tools inside
-  - [Hestio AWSH](http://worx.docs.hest.io/awsh/)
+  - [Hestio AWSH](https://worx.hest.io/awsh/)
   - [Terraform](https://www.terraform.io/) (multiple versions)
   - [Packer](https://www.packer.io/)
   - [Infracost](https://github.com/infracost/infracost)
