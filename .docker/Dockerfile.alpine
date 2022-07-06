@@ -62,8 +62,9 @@ ENV INFRACOST_API_KEY ${INFRACOST_API_KEY}
 
 USER root
 
-# Add new entrypoint
-COPY lib/docker/entrypoint.sh /opt/awsh/lib/docker/entrypoint.sh
+# Add new entrypoint and overrides
+COPY lib/docker/entrypoint.sh ${AWSH_ROOT}/lib/docker/entrypoint.sh
+COPY lib/starship/starship.toml ${AWSH_ROOT}/lib/starship/starship.toml
 
 # Add the Terraform CLI config and ensure the cache dir exists
 COPY lib/docker/terraformrc "${AWSH_USER_HOME}/.terraformrc"
