@@ -160,6 +160,25 @@ function _tf_change_default_version {
 }
 
 
+function _tf_change_version_autodetect {
+
+    local statefile="$(pwd)/terraform.tfstate"
+    if [ -f "${statefile}" ]; then
+        _screen_info "Attempting to detect TF version from local state file"
+        detected_tf_ver=$(cat "${statefile}" | jq -r '.terraform_version // ""')
+        if [ -z ${detected_tf_ver} ]; then
+            _screen_error "Unable to read version from ${statefile}"
+        else
+            _tf_change_default_version ${detected_tf_ver}
+        fi
+
+    else
+        _screen_error "No local Terraform statefile found"
+    fi
+
+}
+
+
 ##############################################################################
 # Main Script
 ##############################################################################
@@ -207,6 +226,11 @@ case ${tf_command} in
     default|switch)
         shift
         _tf_change_default_version "${@}"
+    ;;
+
+    autover)
+        shift
+        _tf_change_version_autodetect "${@}"
     ;;
 
     validate|check)
