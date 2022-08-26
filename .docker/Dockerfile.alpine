@@ -3,8 +3,8 @@ ARG AWSH_VERSION=latest
 ###############################################################################
 # AWSH Workspace - AWSH Toolset with IAC tools
 ###############################################################################
+#FROM hestio/awsh:${AWSH_VERSION} as base
 FROM hestio/awsh:${AWSH_VERSION} as base
-
 ###############################################################################
 # UUID ARGS to prevent Docker's inheritance from ruining our day
 ###############################################################################
@@ -65,6 +65,7 @@ USER root
 # Add new entrypoint and overrides
 COPY lib/docker/entrypoint.sh ${AWSH_ROOT}/lib/docker/entrypoint.sh
 COPY lib/starship/starship.toml ${AWSH_ROOT}/lib/starship/starship.toml
+COPY lib/functions.d/00-firstrun.sh ${AWSH_ROOT}/lib/functions.d/00-firstrun.sh
 
 # Add the Terraform CLI config and ensure the cache dir exists
 COPY lib/docker/terraformrc "${AWSH_USER_HOME}/.terraformrc"
@@ -74,55 +75,38 @@ RUN mkdir -p "${AWSH_USER_HOME}/.terraform.d/plugin-cache"
 COPY requirements/ /tmp
 RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} -r "/tmp/${BLOX_PYTHON_DEPS}"
 
-# Add Packer
+# Add Terraform and tools
 RUN \
     cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" "https://releases.hashicorp.com/packer/${DEFAULT_PACKER_VERSION}/packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip"  && \
-    unzip "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" && \
-    rm "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip"
-
-# Add Terraform versions
-RUN \
-    cd /usr/local/bin && \
+    tf_download="" && \
     for tfver in ${TERRAFORM_VERSIONS}; do \
-        curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terraform_${tfver}_linux_amd64.zip" "https://releases.hashicorp.com/terraform/${tfver}/terraform_${tfver}_linux_amd64.zip"; \
+        tf_download="${tf_download} https://releases.hashicorp.com/terraform/${tfver}/terraform_${tfver}_linux_amd64.zip -o terraform_${tfver}_linux_amd64.zip"; \
+    done && \ 
+    curl -sSL -x  "${BLOX_BUILD_HTTPS_PROXY}" -Z "${DML_BASE_URL_TFLINT}/v${DEFAULT_TFLINT_VERSION}/tflint_linux_amd64.zip" -o "tflint_linux_amd64.zip" \
+                  "${DML_BASE_URL_TERRAGRUNT}/v${DEFAULT_TFLINT_VERSION}/terragrunt_linux_amd64" -o "terragrunt_linux_amd64" \
+                  "https://releases.hashicorp.com/packer/${DEFAULT_PACKER_VERSION}/packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" -o "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" \
+                  "${DML_BASE_URL_INFRACOST}/${DEFAULT_INFRACOST_VERSION}/infracost-linux-amd64.tar.gz" -o "infracost-linux-amd64.tar.gz" \
+                  "${DML_BASE_URL_DRIFTCTL}/${DEFAULT_DRIFTCTL_VERSION}/driftctl_linux_amd64" -o driftctl \
+                  "$(curl -s https://api.github.com/repos/terraform-docs/terraform-docs/releases/latest | grep -o -E -m 1 "https://.+?-linux-amd64.tar.gz")" -o "terraform-docs.tgz" \
+                  "$(curl -s https://api.github.com/repos/aquasecurity/tfsec/releases/latest | grep -o -E -m 1 "https://.+?tfsec-linux-amd64")" -o "tfsec" \
+                  "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E -m 1 "https://.+?_Linux_x86_64.tar.gz")" -o "terrascan.tar.gz" \
+                  ${tf_download} && \
+    for tfver in ${TERRAFORM_VERSIONS}; do \
         unzip "terraform_${tfver}_linux_amd64.zip"; \
         mv terraform "terraform-${tfver}"; \
         rm "terraform_${tfver}_linux_amd64.zip"; \
-    done
-
-# Add TF-Lint
-RUN \
-    cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "tflint_linux_amd64.zip" "${DML_BASE_URL_TFLINT}/v${DEFAULT_TFLINT_VERSION}/tflint_linux_amd64.zip"  && \
-    unzip "tflint_linux_amd64.zip" && \
-    rm "tflint_linux_amd64.zip"
-
-# Add Terragrunt CLI
-RUN \
-    cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" -o "terragrunt_linux_amd64" "${DML_BASE_URL_TERRAGRUNT}/v${DEFAULT_TFLINT_VERSION}/terragrunt_linux_amd64"  && \
+    done && \
+    echo "tflint_linux_amd64.zip" "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" | xargs -n 1 unzip && \
+    tar -zxf "infracost-linux-amd64.tar.gz" && \
+    tar -zxf "terrascan.tar.gz" terrascan && \
+    tar -zxf "terraform-docs.tgz" terraform-docs && \
+    mv "infracost-linux-amd64" "infracost" && \
     mv "terragrunt_linux_amd64" "terragrunt" && \
-    chmod 755 terragrunt
+    chmod 755 terragrunt infracost driftctl terraform-docs tfsec && \
+    rm "tflint_linux_amd64.zip" "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" "infracost-linux-amd64.tar.gz" "terraform-docs.tgz"
 
 # Add landscape
 RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${DEFAULT_LANDSCAPE_VERSION} ${AWSH_GEM_INSTALL_ARGS}
-
-# Add AMI Cleaner: https://pypi.org/project/aws-amicleaner/
-RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} git+https://github.com/DimaGolomozy/aws-amicleaner.git
-
-# Add infracost: https://github.com/infracost/infracost
-RUN \
-    cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" "${DML_BASE_URL_INFRACOST}/${DEFAULT_INFRACOST_VERSION}/infracost-linux-amd64.tar.gz" | tar xz -C /usr/local/bin && \
-    mv "infracost-linux-amd64" "infracost" && \
-    chmod 755 infracost
-
-# Add driftctl
-RUN \
-    cd /usr/local/bin && \
-    curl -sSL -x "${BLOX_BUILD_HTTPS_PROXY}" "${DML_BASE_URL_DRIFTCTL}/${DEFAULT_DRIFTCTL_VERSION}/driftctl_linux_amd64" -o driftctl && \
-    chmod 755 driftctl
 
 COPY bin/ "${AWSH_USER_HOME}/bin/"
 COPY etc/ "${AWSH_USER_HOME}/etc/"
@@ -132,13 +116,17 @@ RUN \
     chown -c -R ${AWSH_USER}:${AWSH_GROUP} ${AWSH_ROOT} && \
     chown -c -R ${AWSH_USER}:${AWSH_GROUP} ${AWSH_USER_HOME}
 
+# Add new entrypoint and overrides
+COPY lib/docker/entrypoint.sh ${AWSH_ROOT}/lib/docker/entrypoint.sh
+COPY lib/starship/starship.toml ${AWSH_ROOT}/lib/starship/starship.toml
+
 # Add hook for AWSH that activates during CICD usage
-RUN echo '. /opt/awsh/etc/awshrc' >> /etc/profile.d/entrypoint.sh
-RUN echo '[ -f ${HOME}/.bashrc_local ] && . ${HOME}/.bashrc_local' >> /etc/profile.d/entrypoint.sh
+RUN echo '. /opt/awsh/etc/awshrc' >> /etc/profile.d/entrypoint.sh && \
+    echo '[ -f ${HOME}/.bashrc_local ] && . ${HOME}/.bashrc_local' >> /etc/profile.d/entrypoint.sh
 
 WORKDIR ${AWSH_USER_HOME}
 USER awsh
+RUN terrascan init
 
 ENTRYPOINT ["/opt/awsh/lib/docker/entrypoint.sh"]
 CMD ["/bin/bash", "-i"]
-
