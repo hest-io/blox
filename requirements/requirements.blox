@@ -2,3 +2,4 @@
 ansible==2.8.15
 # WinRM access for Ansible
 pywinrm>=0.2.2
+git+https://github.com/DimaGolomozy/aws-amicleaner.git

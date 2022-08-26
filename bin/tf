@@ -201,13 +201,21 @@ case ${tf_command} in
     ;;
 
     plan|apply|destroy)
-        _assert_is_authenticated
-        terraform "${@}" ${TF_VAR_FILE_ARGS}
+        if grep -rqw "$(pwd)" -e 'aws = {'; then
+            _assert_is_authenticated
+            terraform "${@}" ${TF_VAR_FILE_ARGS}
+        else
+            terraform "${@}" ${TF_VAR_FILE_ARGS}
+        fi
     ;;
 
     plandiff|diffplan)
-        _assert_is_authenticated
-        terraform "${@}" ${TF_VAR_FILE_ARGS} | landscape
+        if grep -rqw "$(pwd)" -e 'aws = {'; then
+            _assert_is_authenticated
+            terraform "${@}" ${TF_VAR_FILE_ARGS} | landscape
+        else
+            terraform "${@}" ${TF_VAR_FILE_ARGS} | landscape
+        fi
     ;;
 
     export)
