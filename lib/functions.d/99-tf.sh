@@ -62,21 +62,19 @@ function _tf_check_syntax {
 # Change the default TF version used
 function _tf_change_default_version {
     local requested_tf_ver=$1
-    local tf_binaries="$(ls -1 /usr/local/bin/terraform-* | xargs -i basename "{}" | sed -e 's/terraform-//g' | tr '\n' ' ')"
-    if [[ -z ${requested_tf_ver} ]]; then
-        _screen_info "Available Terraform Versions: ${tf_binaries}"
-        _screen_info "You can change the default using 'tf default 1.3.9'"
-    elif [[ -f "/usr/local/bin/terraform-${requested_tf_ver}" ]]; then
-        _screen_info "Changing default version to ${requested_tf_ver}"
-        [[ -f "${HOME}/bin/terraform" ]] && rm -f "${HOME}/bin/terraform"
-        ln -s "/usr/local/bin/terraform-${requested_tf_ver}" "${HOME}/bin/terraform"
-        echo -n "Active version now: "
-        terraform -version
+    local terraform_installed_versons=$(tfenv list | sed 's/*/ /g' | cut -d" " -f3 | tr "\n" " ")
+    _screen_info "Available Terraform Versions: ${terraform_installed_versons}"
+    _screen_info "You can change the default using 'tf default 1.3.9'"
+
+    if [[ "${terraform_installed_versons}" == *"${requested_tf_ver}"* ]]; then
+        tfenv use ${requested_tf_ver}
     else
-        _screen_error "Request TF version (${requested_tf_ver}) not available. Please choose from: ${tf_binaries}"
-        _screen_info "You can change the default using 'tf default 1.3.9'"
+        _screen_error "Request TF version (${requested_tf_ver}) not available. Please choose from: ${terraform_installed_versons}"
+        _screen_info "You can change the default using 'tfenv use 1.3.9'"
+        _screen_info "You can install it manually using 'tfenv use ${requested_tf_ver}'"
     fi
-}
+
+    }
 
 
 function _tf_change_version_autodetect {
