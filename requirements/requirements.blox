@@ -1,5 +1,5 @@
 # VM configuration managament
-ansible==2.8.15
+ansible==2.10.7
 # WinRM access for Ansible
 pywinrm>=0.2.2
 git+https://github.com/DimaGolomozy/aws-amicleaner.git

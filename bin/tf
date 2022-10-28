@@ -146,7 +146,7 @@ function _tf_change_default_version {
     local tf_binaries="$(ls -1 /usr/local/bin/terraform-* | xargs -i basename "{}" | sed -e 's/terraform-//g' | tr '\n' ' ')"
     if [[ -z ${requested_tf_ver} ]]; then
         _screen_info "Available Terraform Versions: ${tf_binaries}"
-        _screen_info "You can change the default using 'tf default 0.11.7'"
+        _screen_info "You can change the default using 'tf default 0.15.5'"
     elif [[ -f "/usr/local/bin/terraform-${requested_tf_ver}" ]]; then
         _screen_info "Changing default version to ${requested_tf_ver}"
         [[ -f "${HOME}/bin/terraform" ]] && rm -f "${HOME}/bin/terraform"
@@ -155,7 +155,7 @@ function _tf_change_default_version {
         terraform -version
     else
         _screen_error "Request TF version (${requested_tf_ver}) not available. Please choose from: ${tf_binaries}"
-        _screen_info "You can change the default using 'tf default 0.11.7'"
+        _screen_info "You can change the default using 'tf default 0.15.5'"
     fi
 }
 
