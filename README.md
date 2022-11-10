@@ -36,12 +36,66 @@ This should make it easier for you to use the latest version and make it easier 
     $ docker run -it --rm hestio/blox
     ```
 
+### Use BLOX with persistent identities, workspace and  a specific Terraform version by default
+
+- Create a path to store your identities and configuration files
+
+    ```console
+    $ mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
+    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
+    ```
+
+- Set the PUID and PGID of current user to the container
+    ```console
+    PUID=$(id -u)
+    PGID=$(id -g)
+    ```
+
+- Run the BLOX container, passing in your AWSH identities and workspace directory
+
+    ```console
+    $ docker run \
+        -it \
+        --name=hestio_blox \
+        --rm \
+        --network=host \
+        --user ${PUID}:${PGID} \
+        -v ${HOME}/.awsh:/home/awsh/.awsh \
+        -v ${HOME}/workspace:/home/awsh/workspace \
+        -v /tmp:/tmp \
+        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \
+        -e "DEFAULT_TERRAFORM_VERSION=0.15.5" \
+        -e "HOME=/home/awsh" \
+        -e "PUID=${PUID}" \
+        -e "PGID=${PGID}" \
+        hestio/blox
+    ```
+
+`The below steps are only required the first time you configure the container`
+
+- Configure the starship once logged into the BLOX container
+    ```console
+    starship init bash > ${HOME}/.bashrc_local
+    ```
+- Activate the starship by running the following command inside the BLOX container
+    ```console
+    source .bashrc_local
+    ```
+
 ### Use BLOX with persistent identities, workspace, proxy config and Active Directory/Kerberos credentials
 
 - Create a path to store your identities
 
     ```console
-    $ mkdir -p ${HOME}/.awsh
+    $ mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
+    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
+    ```
+
+- Set the PUID and PGID of current user to the container
+    ```console
+    PUID=$(id -u)
+    PGID=$(id -g)
     ```
 
 - Run the BLOX container, passing in your AWSH identities and your Kerberos setup and your proxy environment
@@ -49,17 +103,31 @@ This should make it easier for you to use the latest version and make it easier 
     ```console
     $ docker run \
         -it \
+        --name=hestio_blox \
         --network=host \
-        -v ${HOME}/.awsh:/home/blox/.awsh \
+        -v ${HOME}/.awsh:/home/awsh/.awsh \
         -v /etc/krb5.conf:/etc/krb5.conf \
         -v /etc/krb5.conf.d/:/etc/krb5.conf.d/ \
         -v ${HOME}:/workspace \
         -v /tmp:/tmp \
+        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \    
         -e "http_proxy=${http_proxy}" \
         -e "https_proxy=${https_proxy}" \
         -e "no_proxy=${no_proxy}" \
         -e "KRB5CCNAME=${KRB5CCNAME}" \
         hestio/blox
+    ```
+
+`The below steps are only required the first time you configure the container`
+
+- Configure the starship once logged into the BLOX container
+    ```console
+    starship init bash > ${HOME}/.bashrc_local
+    ```
+- Activate the starship by running the following command inside the BLOX container
+    ```console
+    source .bashrc_local
     ```
 
 ### Use BLOX with persistent identities, workspace, proxy config and use a specific Terraform version by default
@@ -67,7 +135,14 @@ This should make it easier for you to use the latest version and make it easier 
 - Create a path to store your identities
 
     ```console
-    $ mkdir -p ${HOME}/.awsh
+    $ mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
+    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
+    ```
+
+- Set the PUID and PGID of current user to the container
+    ```console
+    PUID=$(id -u)
+    PGID=$(id -g)
     ```
 
 - Run the BLOX container, passing in your AWSH identities and your Kerberos setup and your proxy environment
@@ -75,21 +150,36 @@ This should make it easier for you to use the latest version and make it easier 
     ```console
     $ docker run \
         -it \
+        --name=hestio_blox \
         --network=host \
         -v ${HOME}/.awsh:/home/blox/.awsh \
         -v /etc/krb5.conf:/etc/krb5.conf \
         -v /etc/krb5.conf.d/:/etc/krb5.conf.d/ \
         -v ${HOME}:/workspace \
         -v /tmp:/tmp \
+        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \
         -e "http_proxy=${http_proxy}" \
         -e "https_proxy=${https_proxy}" \
         -e "no_proxy=${no_proxy}" \
         -e "KRB5CCNAME=${KRB5CCNAME}" \
-        -e "DEFAULT_TERRAFORM_VERSION=0.12.31" \
+        -e "DEFAULT_TERRAFORM_VERSION=0.15.5" \
         hestio/blox
     ```
 
+`The below steps are only required the first time you configure the container`
+
+- Configure the starship once logged into the BLOX container
+    ```console
+    starship init bash > ${HOME}/.bashrc_local
+    ```
+- Activate the starship by running the following command inside the BLOX container
+    ```console
+    source .bashrc_local
+    ```
+
 ### Create a wrapper script to allow BLOX to be used as a Shell
+The following wrapper script is an example of **Use BLOX with persistent identities, workspace and a specific Terraform version by default**
 
 - Create the wrapper script `/usr/local/bin/blox`
 
@@ -99,25 +189,24 @@ This should make it easier for you to use the latest version and make it easier 
     PUID=$(id -u)
     PGID=$(id -g)
 
-    [ -d ${HOME}/.awsh ] || mkdir -p ${HOME}/.awsh
+    [ -d ${HOME}/.awsh ] || mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
+    touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
 
     docker run \
         -it \
+        --name=hestio_blox \
         --rm \
         --network=host \
         --user ${PUID}:${PGID} \
-        -v ${HOME}/.awsh:/home/blox/.awsh \
-        -v /etc/krb5.conf:/etc/krb5.conf \
-        -v /etc/krb5.conf.d/:/etc/krb5.conf.d/ \
-        -v ${HOME}/workspace:/home/blox/workspace \
+        -v ${HOME}/.awsh:/home/awsh/.awsh \
+        -v ${HOME}/workspace:/home/awsh/workspace \
         -v /tmp:/tmp \
-        -e "HOME=/home/blox" \
+        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \
+        -e "DEFAULT_TERRAFORM_VERSION=0.15.5" \
+        -e "HOME=/home/awsh" \
         -e "PUID=${PUID}" \
         -e "PGID=${PGID}" \
-        -e "http_proxy=${http_proxy}" \
-        -e "https_proxy=${https_proxy}" \
-        -e "no_proxy=${no_proxy}" \
-        -e "KRB5CCNAME=${KRB5CCNAME}" \
         hestio/blox
     ```
 
@@ -131,4 +220,15 @@ This should make it easier for you to use the latest version and make it easier 
 
     ```console
     blox
+    ```
+
+`The below steps are only required the first time you configure the container`
+
+- Configure the starship once logged into the BLOX container
+    ```console
+    starship init bash > ${HOME}/.bashrc_local
+    ```
+- Activate the starship by running the following command inside the BLOX container
+    ```console
+    source .bashrc_local
     ```
