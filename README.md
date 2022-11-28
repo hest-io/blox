@@ -42,7 +42,7 @@ This should make it easier for you to use the latest version and make it easier 
 
     ```console
     $ mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
-    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
+    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc ${HOME}/.awsh/identities/.terraformrc
     ```
 
 - Set the PUID and PGID of current user to the container
@@ -63,8 +63,9 @@ This should make it easier for you to use the latest version and make it easier 
         -v ${HOME}/.awsh:/home/awsh/.awsh \
         -v ${HOME}/workspace:/home/awsh/workspace \
         -v /tmp:/tmp \
-        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
-        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \
+        -v ${HOME}/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v ${HOME}/.awsh/identities/.terraformrc:/home/awsh/.terraformrc \
+        -v ${HOME}/.bashrc_local:/home/awsh/.bashrc_local \
         -e "DEFAULT_TERRAFORM_VERSION=0.15.5" \
         -e "HOME=/home/awsh" \
         -e "PUID=${PUID}" \
@@ -89,7 +90,7 @@ This should make it easier for you to use the latest version and make it easier 
 
     ```console
     $ mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
-    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
+    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc ${HOME}/.awsh/identities/.terraformrc
     ```
 
 - Set the PUID and PGID of current user to the container
@@ -110,8 +111,9 @@ This should make it easier for you to use the latest version and make it easier 
         -v /etc/krb5.conf.d/:/etc/krb5.conf.d/ \
         -v ${HOME}:/workspace \
         -v /tmp:/tmp \
-        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
-        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \    
+        -v ${HOME}/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v ${HOME}/.awsh/identities/.terraformrc:/home/awsh/.terraformrc \
+        -v ${HOME}/.bashrc_local:/home/awsh/.bashrc_local \    
         -e "http_proxy=${http_proxy}" \
         -e "https_proxy=${https_proxy}" \
         -e "no_proxy=${no_proxy}" \
@@ -136,7 +138,7 @@ This should make it easier for you to use the latest version and make it easier 
 
     ```console
     $ mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
-    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
+    $ touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc ${HOME}/.awsh/identities/.terraformrc
     ```
 
 - Set the PUID and PGID of current user to the container
@@ -157,8 +159,9 @@ This should make it easier for you to use the latest version and make it easier 
         -v /etc/krb5.conf.d/:/etc/krb5.conf.d/ \
         -v ${HOME}:/workspace \
         -v /tmp:/tmp \
-        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
-        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \
+        -v ${HOME}/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v ${HOME}/.awsh/identities/.terraformrc:/home/awsh/.terraformrc \
+        -v ${HOME}/.bashrc_local:/home/awsh/.bashrc_local \
         -e "http_proxy=${http_proxy}" \
         -e "https_proxy=${https_proxy}" \
         -e "no_proxy=${no_proxy}" \
@@ -190,7 +193,7 @@ The following wrapper script is an example of **Use BLOX with persistent identit
     PGID=$(id -g)
 
     [ -d ${HOME}/.awsh ] || mkdir -p ${HOME}/.awsh ${HOME}/.awsh/identities ${HOME}/workspace
-    touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc
+    touch ${HOME}/.bashrc_local ${HOME}/.awsh/identities/.netrc ${HOME}/.awsh/identities/.terraformrc
 
     docker run \
         -it \
@@ -201,8 +204,9 @@ The following wrapper script is an example of **Use BLOX with persistent identit
         -v ${HOME}/.awsh:/home/awsh/.awsh \
         -v ${HOME}/workspace:/home/awsh/workspace \
         -v /tmp:/tmp \
-        -v $HOME/.awsh/identities/.netrc:/home/awsh/.netrc \
-        -v $HOME/.bashrc_local:/home/awsh/.bashrc_local \
+        -v ${HOME}/.awsh/identities/.netrc:/home/awsh/.netrc \
+        -v ${HOME}/.awsh/identities/.terraformrc:/home/awsh/.terraformrc \
+        -v ${HOME}/.bashrc_local:/home/awsh/.bashrc_local \
         -e "DEFAULT_TERRAFORM_VERSION=0.15.5" \
         -e "HOME=/home/awsh" \
         -e "PUID=${PUID}" \
@@ -232,3 +236,9 @@ The following wrapper script is an example of **Use BLOX with persistent identit
     ```console
     source .bashrc_local
     ```
+
+# Additional resources
+
+- [How to configure .netrc file (Gitlab credentials)](https://gitlab.com/gitlab-org/gitlab/-/issues/350582)
+- [How to configure .terraformrc file (TFE credentials)](https://developer.hashicorp.com/terraform/cli/config/config-file#credentials-1)
+- [Hestio open sources](https://github.com/hest-io)
