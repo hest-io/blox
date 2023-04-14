@@ -66,6 +66,9 @@ COPY lib/docker/entrypoint.sh ${AWSH_ROOT}/lib/docker/entrypoint.sh
 COPY lib/starship/starship.toml ${AWSH_ROOT}/lib/starship/starship.toml
 COPY lib/functions.d/00-firstrun.sh ${AWSH_ROOT}/lib/functions.d/00-firstrun.sh
 
+# Copy shell functions
+COPY lib/functions.d/99-tf.sh ${AWSH_ROOT}/lib/functions.d/99-tf.sh
+
 # Add the Terraform CLI config and ensure the cache dir exists
 COPY lib/docker/terraformrc "${AWSH_USER_HOME}/.terraformrc"
 RUN mkdir -p "${AWSH_USER_HOME}/.terraform.d/plugin-cache"
