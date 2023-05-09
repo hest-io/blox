@@ -1,86 +1,5 @@
 #!/usr/bin/env bash
 
-##############################################################################
-# Shell Behaviour
-##############################################################################
-
-# Check for unbound variables being used
-# set -o nounset
-
-# Exit is a bad command is attempted. If you're going to handle errors then
-# leave this disabled
-# set -o errexit
-
-# Exit if any of the commands in a pipeline exit with a non-zero exit code
-# set -o pipefail
-
-AWSH_ROOT=/opt/awsh
-
-##############################################################################
-# Variables
-##############################################################################
-
-CONST_COMMAND_LINE="$@"
-CONST_OS_VERSION=$(uname -r)
-CONST_SYSTEM_TYPE=$(uname -m)
-CONST_SCRIPT_NAME=${0##*/}
-
-_LOGFILE="$(mktemp)/${CONST_SCRIPT_NAME}.log"
-_LOGFILE_RETAIN_NUM_LINES=0
-_COLOR_RESET="$(echo -e '\e[0m')"
-_COLOR_RED="$(echo -e '\e[31m')"
-
-# Default for AWSH_ROOT if unset
-: "${AWSH_ROOT:='/opt/awsh'}"
-
-# Load the AWSH Frameverk
-source ${AWSH_ROOT}/etc/awshrc
-
-# Defaults
-: ${TIMESTAMP_FORMAT:="%Y-%m-%dT%H:%M:%S%z"}    # override via environment
-: ${TF_VAR_FILE:="00-environment.tfvars"}       # override via environment
-
-TF_VAR_FILE_ARGS=
-
-##############################################################################
-# Functions
-##############################################################################
-
-# set _LOGFILE to the full path of your desired logfile; make sure
-# you have write permissions there. set _LOGFILE_RETAIN_NUM_LINES to the
-# maximum number of lines that should be retained at the beginning
-# of your program execution.
-# execute 'logsetup' once at the beginning of your script, then  use 'log' as
-# many times you like.
-function _logsetup {
-    TMP=$(tail -n ${_LOGFILE_RETAIN_NUM_LINES} "${_LOGFILE}" 2>/dev/null) && echo "${TMP}" > "${_LOGFILE}"
-    exec > >(tee -a "${_LOGFILE}")
-    exec 2>&1
-}
-
-
-function _log {
-    echo "[$(date --rfc-3339=seconds)]: $*${_COLOR_RESET}"
-}
-
-
-function _log_error {
-    echo "[$(date --rfc-3339=seconds)]: ${_COLOR_RED}$*${_COLOR_RESET}"
-}
-
-
-function _exit_with_error {
-    echo "${_COLOR_RED}$*${_COLOR_RESET}"
-    exit 1
-}
-
-
-# A helper function that can be used to pipe multiple items to the logging helper
-function _log_pipe {
-    while IFS= read -r line; do _log "${line}"; done
-}
-
-
 # Specialized init to tidy existing repos
 function _tf_init {
     # Trash and rebuild the .terraform folder
@@ -126,7 +45,7 @@ function _tf_detect_local_vars {
 
 function _tf_export {
     local _TF_EXPORT_OUTPUT="$(basename "$(pwd)").json"
-    [ -f terraform.tfstate ] || _exit_with_error "No Terraform state file found to export"
+    [ -f terraform.tfstate ] ||  { echo -e "\033[31mNo Terraform state file found to export\033[0m"; return 1; }
     _screen_info "Exporting managed resources to ${_TF_EXPORT_OUTPUT}"
     terraform output managed_resources_json | jq '.' > "${_TF_EXPORT_OUTPUT}"
 }
@@ -136,7 +55,7 @@ function _tf_export {
 function _tf_check_syntax {
     _screen_info "Checking syntax with tflint"
     tflint --config "${HOME}/etc/tflint.hcl"
-    [ $? -eq 0 ] || _exit_with_error "Resolve syntax errors first"
+    [ $? -eq 0 ] ||  { echo -e "\033[31mResolve syntax errors first\033[0m"; return 1; }
 }
 
 
@@ -171,6 +90,13 @@ function _tf_change_version_autodetect {
         else
             _tf_change_default_version ${detected_tf_ver}
         fi
+        _screen_info "Attempting to detect AWS region from local state file"
+        detected_tf_region=$(cat "${statefile}" | jq -r '.resources[] | select(.type == "aws_region")? | .instances[].attributes.id // ""')
+        if [ -z ${detected_tf_region} ]; then
+            _screen_error "Unable to read AWS region from ${statefile}"
+        else
+            _aws_region ${detected_tf_region}
+        fi
 
     else
         _screen_error "No local Terraform statefile found"
@@ -178,7 +104,7 @@ function _tf_change_version_autodetect {
 
 }
 
-
+function tf {
 ##############################################################################
 # Main Script
 ##############################################################################
@@ -186,7 +112,11 @@ function _tf_change_version_autodetect {
 # Redirect all output through the time-stamper
 # exec &> >(_log_pipe)
 
-tf_command="${1}"
+### Variables
+: ${TIMESTAMP_FORMAT:="%Y-%m-%dT%H:%M:%S%z"}    # override via environment
+: ${TF_VAR_FILE:="00-environment.tfvars"}       # override via environment
+local tf_command="${1}"
+local TF_VAR_FILE_ARGS=
 # _tf_detect_local_vars
 
 case ${tf_command} in
@@ -252,3 +182,7 @@ case ${tf_command} in
     ;;
 
 esac
+
+}
+
+export -f tf
