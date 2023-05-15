@@ -65,13 +65,14 @@ function _tf_change_default_version {
     local terraform_installed_versons=$(tfenv list | sed 's/*/ /g' | cut -d" " -f3 | tr "\n" " ")
     _screen_info "Available Terraform Versions: ${terraform_installed_versons}"
     _screen_info "You can change the default using 'tf default 1.3.9'"
+    _screen_info "You can install manually using 'tf use 0.11.15'"
 
     if [[ "${terraform_installed_versons}" == *"${requested_tf_ver}"* ]]; then
         tfenv use ${requested_tf_ver}
     else
         _screen_error "Request TF version (${requested_tf_ver}) not available. Please choose from: ${terraform_installed_versons}"
-        _screen_info "You can change the default using 'tfenv use 1.3.9'"
-        _screen_info "You can install it manually using 'tfenv use ${requested_tf_ver}'"
+        _screen_info "You can change the default using 'tf default 1.3.9'"
+        _screen_info "You can install it manually using 'tf use ${requested_tf_ver}'"
     fi
 
     }
@@ -101,6 +102,14 @@ function _tf_change_version_autodetect {
     fi
 
 }
+
+function _tf_change_version {
+    
+    local requested_tf_ver=$1
+
+    tfenv use ${requested_tf_ver}
+
+    }
 
 function tf {
 ##############################################################################
@@ -167,6 +176,11 @@ case ${tf_command} in
     autover)
         shift
         _tf_change_version_autodetect "${@}"
+    ;;
+
+    use)
+        shift
+        _tf_change_version "${@}"
     ;;
 
     validate|check)
