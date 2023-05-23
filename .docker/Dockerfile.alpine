@@ -50,7 +50,7 @@ ENV AWSH_GROUP awsh
 ENV PUID 1000
 ENV PGID 1000
 ENV PYTHONPATH /opt/awsh/lib/python3
-ENV PATH "/opt/awsh/bin:/opt/awsh/bin/tools:${PATH}:${AWSH_USER_HOME}/bin"
+ENV PATH "/opt/awsh/bin:/opt/awsh/bin/tools:${PATH}:${AWSH_USER_HOME}/bin:${AWSH_USER_HOME}/.tfenv/bin"
 
 ENV DEFAULT_TERRAFORM_VERSION ${DEFAULT_TERRAFORM_VERSION}
 ENV INFRACOST_API_KEY ${INFRACOST_API_KEY}
@@ -81,9 +81,10 @@ RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} -r "/tmp/${BLOX_PYTHON_DEPS}"
 RUN \
     cd /usr/local/bin && \
     tf_download="" && \
+    git clone --depth=1 https://github.com/tfutils/tfenv.git ${AWSH_USER_HOME}/.tfenv && \
     for tfver in ${TERRAFORM_VERSIONS}; do \
-        tf_download="${tf_download} https://releases.hashicorp.com/terraform/${tfver}/terraform_${tfver}_linux_amd64.zip -o terraform_${tfver}_linux_amd64.zip"; \
-    done && \ 
+        ${AWSH_USER_HOME}/.tfenv/bin/tfenv install ${tfver}; \
+    done && \
     curl -sSL -x  "${BLOX_BUILD_HTTPS_PROXY}" -Z "${DML_BASE_URL_TFLINT}/v${DEFAULT_TFLINT_VERSION}/tflint_linux_amd64.zip" -o "tflint_linux_amd64.zip" \
                   "${DML_BASE_URL_TERRAGRUNT}/v${DEFAULT_TFLINT_VERSION}/terragrunt_linux_amd64" -o "terragrunt_linux_amd64" \
                   "https://releases.hashicorp.com/packer/${DEFAULT_PACKER_VERSION}/packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" -o "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" \
@@ -93,11 +94,6 @@ RUN \
                   "$(curl -s https://api.github.com/repos/aquasecurity/tfsec/releases/latest | grep -o -E -m 1 "https://.+?tfsec-linux-amd64")" -o "tfsec" \
                   "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E -m 1 "https://.+?_Linux_x86_64.tar.gz")" -o "terrascan.tar.gz" \
                   ${tf_download} && \
-    for tfver in ${TERRAFORM_VERSIONS}; do \
-        unzip "terraform_${tfver}_linux_amd64.zip"; \
-        mv terraform "terraform-${tfver}"; \
-        rm "terraform_${tfver}_linux_amd64.zip"; \
-    done && \
     echo "tflint_linux_amd64.zip" "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" | xargs -n 1 unzip && \
     tar -zxf "infracost-linux-amd64.tar.gz" && \
     tar -zxf "terrascan.tar.gz" terrascan && \

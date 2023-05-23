@@ -13,8 +13,7 @@ eval $( fixuid -q )
 
 # Link the default TF version. Remove existing file/link if exists as a workaround
 # to GitLab CICD issue where entrypoint is run for each stage when using container based builds
-[[ -f "${HOME}/bin/terraform" ]] && rm -f "${HOME}/bin/terraform"
-ln -s "/usr/local/bin/terraform-${DEFAULT_TERRAFORM_VERSION}" "${HOME}/bin/terraform"
+${HOME}/.tfenv/bin/tfenv use ${DEFAULT_TERRAFORM_VERSION}
 
 # On with the show
 exec "$@"
