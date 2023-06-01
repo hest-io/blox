@@ -139,7 +139,10 @@ case ${tf_command} in
 
     plan|apply|destroy)
         if grep -rqw "$(pwd)" -e 'aws = {'; then
-            _assert_is_authenticated
+            if ! _aws_is_authenticated ; then
+                _screen_error 'This command requires an active AWS session. Login first please!'
+                return
+            fi
             terraform "${@}" ${TF_VAR_FILE_ARGS}
         else
             terraform "${@}" ${TF_VAR_FILE_ARGS}
@@ -148,7 +151,10 @@ case ${tf_command} in
 
     plandiff|diffplan)
         if grep -rqw "$(pwd)" -e 'aws = {'; then
-            _assert_is_authenticated
+            if ! _aws_is_authenticated ; then
+                _screen_error 'This command requires an active AWS session. Login first please!'
+                return
+            fi
             terraform "${@}" ${TF_VAR_FILE_ARGS} | landscape
         else
             terraform "${@}" ${TF_VAR_FILE_ARGS} | landscape
