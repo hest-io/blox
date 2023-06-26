@@ -68,7 +68,7 @@ function _tf_change_default_version {
     _screen_info "You can install manually using 'tf use 0.11.15'"
 
     if [[ "${terraform_installed_versons}" == *"${requested_tf_ver}"* ]]; then
-        tfenv use ${requested_tf_ver}
+        tfenv use "${requested_tf_ver}"
     else
         _screen_error "Request TF version (${requested_tf_ver}) not available. Please choose from: ${terraform_installed_versons}"
         _screen_info "You can change the default using 'tf default 1.3.9'"
@@ -84,17 +84,21 @@ function _tf_change_version_autodetect {
     if [ -f "${statefile}" ]; then
         _screen_info "Attempting to detect TF version from local state file"
         detected_tf_ver=$(cat "${statefile}" | jq -r '.terraform_version // ""')
-        if [ -z ${detected_tf_ver} ]; then
+        if [ -z "${detected_tf_ver}" ]; then
             _screen_error "Unable to read version from ${statefile}"
         else
-            _tf_change_default_version ${detected_tf_ver}
+            _tf_change_default_version "${detected_tf_ver}"
         fi
-        _screen_info "Attempting to detect AWS region from local state file"
-        detected_tf_region=$(cat "${statefile}" | jq -r '.resources[] | select(.type == "aws_region")? | .instances[].attributes.id // ""')
-        if [ -z ${detected_tf_region} ]; then
-            _screen_error "Unable to read AWS region from ${statefile}"
+        if _aws_is_authenticated ; then
+            _screen_info "Attempting to detect AWS region from local state file"
+            detected_tf_region="$(cat "${statefile}" | jq -r '.resources[] | select(.type == "aws_region")? | .instances[].attributes.id // ""')"
+            if [ -z "${detected_tf_region}" ]; then
+                _screen_error "Unable to read AWS region from ${statefile}"
+            else
+                _aws_region "${detected_tf_region}"
+            fi
         else
-            _aws_region ${detected_tf_region}
+            _screen_warn "AWS region detection was skipped due to no active session."
         fi
 
     else
@@ -107,7 +111,7 @@ function _tf_change_version {
     
     local requested_tf_ver=$1
 
-    tfenv use ${requested_tf_ver}
+    tfenv use "${requested_tf_ver}"
 
     }
 
