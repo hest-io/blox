@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 '''
-Terraform-State-Doc is an advanced tool specifically designed to generate detailed and organized documentation from your Terraform state files.
-It's an invaluable asset for DevOps professionals, cloud engineers, and anyone working with Terraform and wishing to keep a well-documented, easy-to-understand record of their infrastructure.
+Terraform-State-Doc generates detailed and organized documentation from Terraform state files.
+It's essential for DevOps, cloud engineers, and anyone using Terraform to maintain well-documented infrastructure.
 
 Usage:
     terraform-state-doc [options]
@@ -54,7 +54,7 @@ def main(options):
     with open(options['--output'], "w") as f:
         f.write("# AS BUILT DOCS\n\n")
         f.write(
-            "This manuscript is a detailed reflection of the present state of resources, meticulously provisioned through Terraform's Infrastructure as Code (IaaC) methodology. It serves as a testament to the dynamism of your infrastructure, continually updated and aligned with your evolving technological landscape.\n\n"
+            "This document represents the current state of resources provisioned from Terraform IaaC (Infrastructure as Code).\n\n"
         )
         f.write("## Table of Contents\n\n")
         for resource_type in unique_resource_type:
