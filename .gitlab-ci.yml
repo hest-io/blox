@@ -7,6 +7,8 @@ image:
 stages:
   - build
   - push
+  - compare
+  - notify
 
 variables:
   DOCKERHUB_REGISTRY: "docker.io"
@@ -14,6 +16,12 @@ variables:
 
 services:
   - docker:dind
+
+include:
+  - project: 'hest-io/hestio-product/hestio-worx/autoworx/ci/templates'
+    file:
+      - 'Jobs/Docker/docker-compare-image-sizes.gitlab-ci.yml'
+      - 'Jobs/Notifications/release-slack-notify.gitlab-ci.yml'
 
 ###############################################################################
 # Task Templates
@@ -107,3 +115,9 @@ push-label:
     # We want this job to be run on tags only.
     - tags
     - develop
+
+compare_image_sizes:
+  stage: compare
+
+release_slack_notify:
+  stage: notify
