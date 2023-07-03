@@ -1,7 +1,8 @@
 # BLOX: Containerized Tools for developing and building on AWS
 
+![Opensource](https://img.shields.io/badge/open%20source%3F-YES!-651fff.svg?style=flat-square)
 [![GitHub license](https://img.shields.io/github/license/hest-io/blox.svg?style=flat-square)](https://github.com/hest-io/blox/blob/master/LICENSE)
-[![GitHub changelog](https://img.shields.io/badge/documentation-ONLINE-651fff.svg?style=flat-square)](https://worx.hest.io/blox/)
+[![GitHub changelog](https://img.shields.io/badge/documentation-ONLINE-651fff.svg?style=flat-square)](https://worx.hest.io/tutorials/category/blox-tutorials)
 [![Docker Pulls](https://img.shields.io/docker/pulls/hestio/blox.svg)](https://hub.docker.com/r/hestio/blox)
 
 ## What is BLOX?
