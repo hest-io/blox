@@ -16,7 +16,6 @@ ARG BLOX_BUILD_NO_PROXY
 # ARGs
 ###############################################################################
 
-ARG DML_BASE_URL_TF="https://releases.hashicorp.com/terraform"
 ARG DML_BASE_URL_TFLINT="https://github.com/terraform-linters/tflint/releases/download"
 ARG DML_BASE_URL_TERRAGRUNT="https://github.com/gruntwork-io/terragrunt/releases/download"
 ARG DML_BASE_URL_INFRACOST="https://github.com/infracost/infracost/releases/download"
@@ -24,15 +23,15 @@ ARG DML_BASE_URL_DRIFTCTL="https://github.com/snyk/driftctl/releases/download"
 
 ARG BLOX_PYTHON_DEPS="requirements.blox"
 ARG RUNTIME_PACKAGES="wget"
-ARG TERRAFORM_VERSIONS="1.3.9 0.15.5 0.13.7 0.12.31"
+ARG TERRAFORM_VERSIONS="1.5.5 1.3.9 0.15.5 0.12.31"
 
 # Versions of tools injected into the BLOX container
 ARG DEFAULT_TERRAFORM_VERSION="1.3.9"
-ARG DEFAULT_TFLINT_VERSION="0.29.1"
-ARG DEFAULT_PACKER_VERSION="1.8.3"
-ARG DEFAULT_TERRAGRUNT_VERSION="v0.39.2"
-ARG DEFAULT_INFRACOST_VERSION="v0.10.13"
-ARG DEFAULT_DRIFTCTL_VERSION="v0.38.2"
+ARG DEFAULT_TFLINT_VERSION="0.47.0"
+ARG DEFAULT_PACKER_VERSION="1.9.2"
+ARG DEFAULT_TERRAGRUNT_VERSION="v0.50.1"
+ARG DEFAULT_INFRACOST_VERSION="v0.10.28"
+ARG DEFAULT_DRIFTCTL_VERSION="v0.39.0"
 ARG DEFAULT_LANDSCAPE_VERSION="0.3.4"
 
 ARG CMD_PIP="python3 -m pip"
