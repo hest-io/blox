@@ -91,7 +91,7 @@ function _tf_change_version_autodetect {
         fi
         if _aws_is_authenticated ; then
             _screen_info "Attempting to detect AWS region from local state file"
-            detected_tf_region="$(cat "${statefile}" | jq -r '.resources[] | select(.type == "aws_region")? | .instances[].attributes.id // ""')"
+            detected_tf_region="$(cat "${statefile}" | jq -r '.resources[]? | select(.type == "aws_region")? | .instances[].attributes.id // ""')"
             if [ -z "${detected_tf_region}" ]; then
                 _screen_error "Unable to read AWS region from ${statefile}"
             else
