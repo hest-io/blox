@@ -48,7 +48,7 @@ ENV AWSH_USER awsh
 ENV AWSH_GROUP awsh
 ENV PUID 1000
 ENV PGID 1000
-ENV PYTHONPATH /opt/awsh/lib/python3
+ENV PYTHONPATH /opt/awsh/lib/python
 ENV PATH "/opt/awsh/bin:/opt/awsh/bin/tools:${PATH}:${AWSH_USER_HOME}/bin:${AWSH_USER_HOME}/.tfenv/bin"
 
 ENV DEFAULT_TERRAFORM_VERSION ${DEFAULT_TERRAFORM_VERSION}
