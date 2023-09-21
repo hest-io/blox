@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""
+Basic script to check whether repository contents are compliant
+
+Usage:
+  validator [options]
+  validator ( -h | --help )
+
+Options:
+  -m, --mode=<mode>    Can either run as: (junit|pre-commit) [default: junit]
+  -h, --help           Show this help message and exit
+  --debug              Show more verbose logging
+"""
+
+import unittest
+from os import path
+from xmlrunner import XMLTestRunner
+import logging
+import docopt
+from awshutils.logger import AWSHLog
+from awshutils.config import get_config_from_file
+from awshutils import check_imports, clean_up
+import sys
+check_imports()
+
+# Logging setup
+_log = AWSHLog(__file__)
+_log.setLevel(logging.ERROR)
+logging.captureWarnings(True)
+
+__unittest = True
+class test_contents(unittest.TestCase):
+    def test_file_existence(self):
+      contents = ["assets", "DOCUMENTATION.md", "docs-metadata.yml", "examples/example.yml", "README.md"]
+      for content in contents:
+        with self.subTest(file=content):
+          self.assertTrue(path.exists(content), f"File name {content} has not been found")
+
+    def test_metadata_keys(self):
+      try:
+        metadata_keys = ["pattern_label", "catalog_path", "pattern_id", "pattern_source", "terraform_source", "description"]
+        data = {}
+        with open("docs-metadata.yml", "r") as metadata_file:
+          for line in metadata_file:
+            lines = line.strip().split(":")
+            if len(lines) == 2:
+              key, value = lines[0], lines[1]
+              data[key] = value
+  
+        for key in metadata_keys:
+          with self.subTest(key=key):
+            self.assertIn(key, data, f"The key '{key}' does not exist in the 'docs-metadata.yml' file.")
+      
+      except FileNotFoundError as e:
+        self.fail(e)
+
+    def test_metadata_pattern_id(self):
+      try:
+        data = {}
+        with open("docs-metadata.yml", "r") as metadata_file:
+          for line in metadata_file:
+            lines = line.strip().split(":")
+            if len(lines) == 2:
+              key, value = lines[0], lines[1]
+              data[key] = value
+  
+        pattern_id = data.get("pattern_id")
+        with self.subTest(key=pattern_id):
+          self.assertNotIn("-", pattern_id, f"The key 'pattern_id' value in the 'docs-metadata.yml' file contains the character '-' instead of '_'")
+      except FileNotFoundError as e:
+        self.fail(e)
+
+# Main function to parse/tabulate the information generated from application and classic functions
+def main(options):
+    if options ["--debug"] is True:
+        import logging
+        _log.setLevel(logging.DEBUG)
+
+    for key, value in options.items():
+        _log.debug("command-line options: {}: {}".format(key, value))
+
+    try:
+        if options["--mode"] == ("junit"):
+          with open('junit-xml-report.xml', 'wb') as output:
+            unittest.main(
+              testRunner=XMLTestRunner(output=output),
+              failfast=False, buffer=False, catchbreak=False)
+        
+        else:
+           _log.error("Invalid mode provided")
+
+    except FileNotFoundError as e:
+        _log.error(e)
+        clean_up(-1)
+    clean_up()
+
+##############################################################################
+# Main Script/Loop
+##############################################################################
+
+if __name__ == "__main__":
+    try:
+        options = docopt.docopt(__doc__)
+        main(options)
+    except docopt.DocoptExit:
+        sys.exit(__doc__)

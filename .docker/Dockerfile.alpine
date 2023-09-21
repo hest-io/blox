@@ -72,6 +72,9 @@ COPY lib/functions.d/99-tf.sh ${AWSH_ROOT}/lib/functions.d/99-tf.sh
 COPY lib/docker/terraformrc "${AWSH_USER_HOME}/.terraformrc"
 RUN mkdir -p "${AWSH_USER_HOME}/.terraform.d/plugin-cache"
 
+# Copy repository validator script
+COPY lib/tools/validator "/opt/awsh/bin/tools/validator"
+
 # Add Python packages
 COPY requirements/ /tmp
 RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} -r "/tmp/${BLOX_PYTHON_DEPS}"
