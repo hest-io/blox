@@ -3,7 +3,6 @@ ARG AWSH_VERSION=latest
 ###############################################################################
 # AWSH Workspace - AWSH Toolset with IAC tools
 ###############################################################################
-#FROM hestio/awsh:${AWSH_VERSION} as base
 FROM hestio/awsh:${AWSH_VERSION} as base
 ###############################################################################
 # UUID ARGS to prevent Docker's inheritance from ruining our day
@@ -20,19 +19,21 @@ ARG DML_BASE_URL_TFLINT="https://github.com/terraform-linters/tflint/releases/do
 ARG DML_BASE_URL_TERRAGRUNT="https://github.com/gruntwork-io/terragrunt/releases/download"
 ARG DML_BASE_URL_INFRACOST="https://github.com/infracost/infracost/releases/download"
 ARG DML_BASE_URL_DRIFTCTL="https://github.com/snyk/driftctl/releases/download"
+ARG DML_BASE_URL_OPENTOFU="https://github.com/opentofu/opentofu/releases/download"
 
 ARG BLOX_PYTHON_DEPS="requirements.blox"
 ARG RUNTIME_PACKAGES="wget"
-ARG TERRAFORM_VERSIONS="1.5.5 1.3.9 0.15.5 0.12.31"
+ARG TERRAFORM_VERSIONS="1.5.7"
+ARG OPENTOFU_VERSION="1.6.1"
 
 # Versions of tools injected into the BLOX container
-ARG DEFAULT_TERRAFORM_VERSION="1.3.9"
+ARG DEFAULT_TERRAFORM_VERSION="1.5.7"
+ARG DEFAULT_OPENTOFU_VERSION="1.6.1"
 ARG DEFAULT_TFLINT_VERSION="0.47.0"
 ARG DEFAULT_PACKER_VERSION="1.9.2"
-ARG DEFAULT_TERRAGRUNT_VERSION="v0.50.1"
+ARG DEFAULT_TERRAGRUNT_VERSION="v0.54.22"
 ARG DEFAULT_INFRACOST_VERSION="v0.10.28"
 ARG DEFAULT_DRIFTCTL_VERSION="v0.39.0"
-ARG DEFAULT_LANDSCAPE_VERSION="0.3.4"
 
 ARG CMD_PIP="python3 -m pip"
 
@@ -63,10 +64,9 @@ USER root
 # Add new entrypoint and overrides
 COPY lib/docker/entrypoint.sh ${AWSH_ROOT}/lib/docker/entrypoint.sh
 COPY lib/starship/starship.toml ${AWSH_ROOT}/lib/starship/starship.toml
-COPY lib/functions.d/00-firstrun.sh ${AWSH_ROOT}/lib/functions.d/00-firstrun.sh
 
 # Copy shell functions
-COPY lib/functions.d/99-tf.sh ${AWSH_ROOT}/lib/functions.d/99-tf.sh
+COPY lib/functions.d/*.sh ${AWSH_ROOT}/lib/functions.d/
 
 # Add the Terraform CLI config and ensure the cache dir exists
 COPY lib/docker/terraformrc "${AWSH_USER_HOME}/.terraformrc"
@@ -83,19 +83,22 @@ RUN ${CMD_PIP} install ${AWSH_PIP_INSTALL_ARGS} -r "/tmp/${BLOX_PYTHON_DEPS}"
 RUN \
     cd /usr/local/bin && \
     tf_download="" && \
-    git clone --depth=1 https://github.com/tfutils/tfenv.git ${AWSH_USER_HOME}/.tfenv && \
+    git clone --depth=1 https://github.com/tfutils/tfenv.git "${AWSH_USER_HOME}/.tfenv" && \
     for tfver in ${TERRAFORM_VERSIONS}; do \
-        ${AWSH_USER_HOME}/.tfenv/bin/tfenv install ${tfver}; \
+        "${AWSH_USER_HOME}/.tfenv/bin/tfenv" install "${tfver}"; \
     done && \
+    wget -q "${DML_BASE_URL_OPENTOFU}/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_amd64.zip" -O tofu.zip && \
+    unzip tofu.zip tofu && \
+    rm tofu.zip && \
     curl -sSL -x  "${BLOX_BUILD_HTTPS_PROXY}" -Z "${DML_BASE_URL_TFLINT}/v${DEFAULT_TFLINT_VERSION}/tflint_linux_amd64.zip" -o "tflint_linux_amd64.zip" \
-                  "${DML_BASE_URL_TERRAGRUNT}/v${DEFAULT_TFLINT_VERSION}/terragrunt_linux_amd64" -o "terragrunt_linux_amd64" \
-                  "https://releases.hashicorp.com/packer/${DEFAULT_PACKER_VERSION}/packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" -o "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" \
-                  "${DML_BASE_URL_INFRACOST}/${DEFAULT_INFRACOST_VERSION}/infracost-linux-amd64.tar.gz" -o "infracost-linux-amd64.tar.gz" \
-                  "${DML_BASE_URL_DRIFTCTL}/${DEFAULT_DRIFTCTL_VERSION}/driftctl_linux_amd64" -o driftctl \
-                  "$(curl -s https://api.github.com/repos/terraform-docs/terraform-docs/releases/latest | grep -o -E -m 1 "https://.+?-linux-amd64.tar.gz")" -o "terraform-docs.tgz" \
-                  "$(curl -s https://api.github.com/repos/aquasecurity/tfsec/releases/latest | grep -o -E -m 1 "https://.+?tfsec-linux-amd64")" -o "tfsec" \
-                  "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E -m 1 "https://.+?_Linux_x86_64.tar.gz")" -o "terrascan.tar.gz" \
-                  ${tf_download} && \
+        "${DML_BASE_URL_TERRAGRUNT}/v${DEFAULT_TFLINT_VERSION}/terragrunt_linux_amd64" -o "terragrunt_linux_amd64" \
+        "https://releases.hashicorp.com/packer/${DEFAULT_PACKER_VERSION}/packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" -o "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" \
+        "${DML_BASE_URL_INFRACOST}/${DEFAULT_INFRACOST_VERSION}/infracost-linux-amd64.tar.gz" -o "infracost-linux-amd64.tar.gz" \
+        "${DML_BASE_URL_DRIFTCTL}/${DEFAULT_DRIFTCTL_VERSION}/driftctl_linux_amd64" -o driftctl \
+        "$(curl -s https://api.github.com/repos/terraform-docs/terraform-docs/releases/latest | grep -o -E -m 1 "https://.+?-linux-amd64.tar.gz")" -o "terraform-docs.tgz" \
+        "$(curl -s https://api.github.com/repos/aquasecurity/tfsec/releases/latest | grep -o -E -m 1 "https://.+?tfsec-linux-amd64")" -o "tfsec" \
+        "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E -m 1 "https://.+?_Linux_x86_64.tar.gz")" -o "terrascan.tar.gz" \
+        ${tf_download} && \
     echo "tflint_linux_amd64.zip" "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" | xargs -n 1 unzip && \
     tar -zxf "infracost-linux-amd64.tar.gz" && \
     tar -zxf "terrascan.tar.gz" terrascan && \
@@ -104,9 +107,6 @@ RUN \
     mv "terragrunt_linux_amd64" "terragrunt" && \
     chmod 755 terragrunt infracost driftctl terraform-docs tfsec && \
     rm "tflint_linux_amd64.zip" "packer_${DEFAULT_PACKER_VERSION}_linux_amd64.zip" "infracost-linux-amd64.tar.gz" "terraform-docs.tgz"
-
-# Add landscape
-RUN http_proxy="${BLOX_BUILD_HTTP_PROXY}" https_proxy="${BLOX_BUILD_HTTP_PROXY}" gem install terraform_landscape --version ${DEFAULT_LANDSCAPE_VERSION} ${AWSH_GEM_INSTALL_ARGS}
 
 COPY bin/ "${AWSH_USER_HOME}/bin/"
 COPY etc/ "${AWSH_USER_HOME}/etc/"
